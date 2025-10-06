@@ -42,7 +42,10 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(./SolusManifestApp.exe)",
-      "Bash(start SolusManifestApp.exe)"
+      "Bash(start SolusManifestApp.exe)",
+      "Bash(start \"\" \"bin/Release/net8.0-windows/SolusManifestApp.exe\")",
+      "Bash(\"bin/Release/net8.0-windows/SolusManifestApp.exe\")",
+      "Bash(dotnet msbuild:*)"
     ],
     "deny": [],
     "ask": []

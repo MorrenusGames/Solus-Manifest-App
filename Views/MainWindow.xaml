@@ -4,7 +4,6 @@
         xmlns:viewmodels="clr-namespace:SolusManifestApp.ViewModels"
         xmlns:views="clr-namespace:SolusManifestApp.Views"
         Title="Solus Manifest App"
-        Icon="/icon.ico"
         Height="1060"
         Width="1500"
         MinHeight="700"
@@ -69,11 +68,6 @@
                     <StackPanel Orientation="Horizontal"
                                 VerticalAlignment="Center"
                                 Margin="20,0">
-                        <Image Source="/icon.ico"
-                               Width="24"
-                               Height="24"
-                               Margin="0,0,10,0"
-                               VerticalAlignment="Center"/>
                         <TextBlock Text="Solus Manifest App"
                                    FontSize="18"
                                    FontWeight="Bold"
