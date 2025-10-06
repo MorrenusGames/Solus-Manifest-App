@@ -1042,7 +1042,7 @@ namespace SolusManifestApp.Services
                 }
                 catch { }
 
-                // 3. Remove depot manifest files (depotcache_*.manifest)
+                // 3. Remove depot manifest files ({depotId}_*.manifest)
                 var steamAppsPath = Path.Combine(steamPath, "steamapps");
                 if (Directory.Exists(steamAppsPath))
                 {
@@ -1050,10 +1050,10 @@ namespace SolusManifestApp.Services
                     {
                         try
                         {
-                            var manifestPath = Path.Combine(steamAppsPath, $"depotcache_{depotId}.manifest");
-                            if (File.Exists(manifestPath))
+                            var manifestFiles = Directory.GetFiles(steamAppsPath, $"{depotId}_*.manifest");
+                            foreach (var manifestFile in manifestFiles)
                             {
-                                File.Delete(manifestPath);
+                                File.Delete(manifestFile);
                             }
                         }
                         catch { }
