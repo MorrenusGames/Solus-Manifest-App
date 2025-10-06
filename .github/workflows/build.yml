@@ -77,6 +77,13 @@ jobs:
       if: github.event_name == 'push'
       run: dotnet publish --configuration Release --no-self-contained --output ./publish/minimal
 
+    - name: Remove PDB files
+      if: github.event_name == 'push'
+      run: |
+        Remove-Item -Path ./publish/full/*.pdb -ErrorAction SilentlyContinue
+        Remove-Item -Path ./publish/deps/*.pdb -ErrorAction SilentlyContinue
+        Remove-Item -Path ./publish/minimal/*.pdb -ErrorAction SilentlyContinue
+
     - name: Create Release Archives
       if: github.event_name == 'push'
       run: |
