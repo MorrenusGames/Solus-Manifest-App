@@ -37,7 +37,10 @@
       "Bash(del rename.ps1)",
       "Bash(if [ -d \"C:/Morrenus Stuff/Solus Manifest App\" ])",
       "Bash(then echo \"Directory exists\")",
-      "Bash(else echo \"Directory does not exist\")"
+      "Bash(else echo \"Directory does not exist\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
