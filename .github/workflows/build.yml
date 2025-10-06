@@ -18,6 +18,8 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: write
+      packages: write
+      pull-requests: write
 
     steps:
     - name: Checkout code
@@ -70,13 +72,29 @@ jobs:
           SolusManifestApp-latest-win-x64.zip
         retention-days: 30
 
-    - name: Update Latest Release
-      uses: marvinpinto/action-automatic-releases@latest
+    - name: Delete existing latest release
+      if: github.event_name == 'push' && success()
+      continue-on-error: true
+      run: |
+        gh release delete latest --yes
+      env:
+        GH_TOKEN: ${{ github.token }}
+
+    - name: Delete existing latest tag
+      if: github.event_name == 'push' && success()
+      continue-on-error: true
+      run: |
+        git push origin :refs/tags/latest
+      env:
+        GH_TOKEN: ${{ github.token }}
+
+    - name: Create Latest Release
+      uses: softprops/action-gh-release@v2
       if: github.event_name == 'push' && success()
       with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        automatic_release_tag: latest
+        tag_name: latest
+        name: Latest Build (Development)
         prerelease: true
-        title: "Latest Build (Development)"
-        files: |
-          SolusManifestApp-latest-win-x64.zip
+        files: SolusManifestApp-latest-win-x64.zip
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
