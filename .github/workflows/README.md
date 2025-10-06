@@ -7,7 +7,10 @@ This directory contains automated workflows for building and releasing Solus Man
 ### 1. Build (`build.yml`)
 - **Triggers:** Push or Pull Request to main/master branch
 - **Purpose:** Continuous Integration - validates that code builds successfully
-- **Output:** Build artifacts uploaded to GitHub (retained for 7 days)
+- **Output:**
+  - Build artifacts uploaded to GitHub (retained for 30 days)
+  - **"Latest" pre-release** created/updated on every push
+  - Self-contained Windows x64 executable (SolusManifestApp-latest-win-x64.zip)
 
 ### 2. Release (`release.yml`)
 - **Triggers:**
@@ -17,6 +20,24 @@ This directory contains automated workflows for building and releasing Solus Man
 - **Output:**
   - GitHub Release created automatically
   - Windows x64 zip file attached to release
+
+## Release Types
+
+### Latest Build (Development)
+- **Tag:** `latest`
+- **Type:** Pre-release
+- **When:** Updated on every push to main/master
+- **Purpose:** Testing and development
+- **Download:** Always available at the "latest" release
+- **Stability:** ⚠️ May be unstable
+
+### Stable Releases
+- **Tag:** `v1.0.0`, `v1.1.0`, etc.
+- **Type:** Official release
+- **When:** Created manually via git tags
+- **Purpose:** Production use
+- **Download:** Available as versioned releases
+- **Stability:** ✅ Tested and stable
 
 ## Creating a Release
 

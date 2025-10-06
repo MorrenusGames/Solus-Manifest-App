@@ -34,11 +34,48 @@ jobs:
           exit 1
         }
 
+    - name: Publish Windows x64
+      run: dotnet publish --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --output ./publish/win-x64
+
+    - name: Create Release Archive
+      run: |
+        cd publish/win-x64
+        7z a ../../SolusManifestApp-latest-win-x64.zip *
+
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       if: success()
       with:
         name: SolusManifestApp-Build-${{ github.sha }}
         path: |
-          bin/Release/net8.0-windows/**/*
-        retention-days: 7
+          SolusManifestApp-latest-win-x64.zip
+        retention-days: 30
+
+    - name: Update Latest Release
+      uses: softprops/action-gh-release@v1
+      if: github.event_name == 'push' && success()
+      with:
+        tag_name: latest
+        name: Latest Build (Development)
+        prerelease: true
+        files: |
+          SolusManifestApp-latest-win-x64.zip
+        body: |
+          ## Latest Development Build
+
+          **Branch:** ${{ github.ref_name }}
+          **Commit:** ${{ github.sha }}
+          **Build Date:** ${{ github.event.head_commit.timestamp }}
+
+          This is an automated build from the latest commit. For stable releases, see the [Releases](https://github.com/${{ github.repository }}/releases) page (tagged versions).
+
+          ### Download
+          - **Windows x64**: SolusManifestApp-latest-win-x64.zip
+
+          ### Recent Changes
+          ${{ github.event.head_commit.message }}
+
+          ---
+          🤖 Automated build - may be unstable
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

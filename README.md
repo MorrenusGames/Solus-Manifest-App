@@ -110,12 +110,20 @@ Solus Manifest App is a powerful Windows desktop application for managing Steam 
 
 ### Option 1: Download Release (Recommended)
 
+**For Stable Releases:**
 1. Go to [Releases](https://github.com/yourusername/solus-manifest-app/releases)
-2. Download `SolusManifestApp-vX.X.X-win-x64.zip`
+2. Download a versioned release: `SolusManifestApp-v1.0.0-win-x64.zip`
 3. Extract to a folder
 4. Run `SolusManifestApp.exe`
 
-**No installation required!** The release includes the .NET runtime.
+**For Latest Development Build:**
+1. Go to [Releases](https://github.com/yourusername/solus-manifest-app/releases)
+2. Find the "Latest Build (Development)" pre-release
+3. Download `SolusManifestApp-latest-win-x64.zip`
+4. Extract and run `SolusManifestApp.exe`
+   - ⚠️ Warning: May be unstable, use for testing only
+
+**No installation required!** All releases include the .NET runtime.
 
 ### Option 2: Build from Source
 
