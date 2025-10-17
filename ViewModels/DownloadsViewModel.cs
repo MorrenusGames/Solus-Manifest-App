@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using SolusManifestApp.Models;
 using SolusManifestApp.Services;
 using SolusManifestApp.Views.Dialogs;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -273,6 +274,15 @@ namespace SolusManifestApp.ViewModels
                     _logger.Info($"Filtered depot list contains {filteredDepotIds.Count} depots: {string.Join(", ", filteredDepotIds)}");
                     StatusMessage = $"Found {filteredDepotIds.Count} depots for {languageDialog.SelectedLanguage}. Preparing depot selection...";
 
+                    // Load depot names from depots.ini for friendly display
+                    var depotNameService = new DepotNameService();
+                    var depotIniPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "depots.ini");
+                    depotNameService.LoadDepotNames(depotIniPath);
+                    if (depotNameService.IsLoaded)
+                    {
+                        _logger.Info($"Loaded {depotNameService.Count} depot names from depots.ini");
+                    }
+
                     // Convert filtered depot IDs to depot info list for selection dialog
                     _logger.Info("Step 7: Converting filtered depot IDs to depot info for selection dialog...");
                     var depotsForSelection = new List<DepotInfo>();
@@ -280,8 +290,8 @@ namespace SolusManifestApp.ViewModels
                     {
                         if (uint.TryParse(depotIdStr, out var depotId) && parsedDepotKeys.ContainsKey(depotIdStr))
                         {
-                            // Try to get depot name/info from SteamCMD data
-                            string depotName = $"Depot {depotId}";
+                            // Get friendly depot name from depots.ini, or fallback to generic name
+                            string depotName = depotNameService.GetDepotName(depotIdStr);
                             string depotLanguage = "";
                             long depotSize = 0;
 

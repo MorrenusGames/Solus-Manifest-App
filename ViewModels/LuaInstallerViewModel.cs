@@ -365,14 +365,19 @@ namespace SolusManifestApp.ViewModels
 
                         StatusMessage = $"Found {filteredDepotIds.Count} depots for {languageDialog.SelectedLanguage}. Preparing depot selection...";
 
+                        // Load depot names from depots.ini for friendly display
+                        var depotNameService = new DepotNameService();
+                        var depotIniPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "depots.ini");
+                        depotNameService.LoadDepotNames(depotIniPath);
+
                         // Convert filtered depot IDs to depot info list for selection dialog
                         var depotsForSelection = new List<DepotInfo>();
                         foreach (var depotIdStr in filteredDepotIds)
                         {
                             if (uint.TryParse(depotIdStr, out var depotId) && parsedDepotKeys.ContainsKey(depotIdStr))
                             {
-                                // Try to get depot name/info from SteamCMD data
-                                string depotName = $"Depot {depotId}";
+                                // Get friendly depot name from depots.ini, or fallback to generic name
+                                string depotName = depotNameService.GetDepotName(depotIdStr);
                                 string depotLanguage = "";
                                 long depotSize = 0;
 
