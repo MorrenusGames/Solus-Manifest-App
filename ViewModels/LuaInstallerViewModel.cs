@@ -300,16 +300,31 @@ namespace SolusManifestApp.ViewModels
 
                         // Fetch depot metadata directly from Steam using SteamKit2
                         var steamKitService = new SteamKitAppInfoService();
-                        await steamKitService.InitializeAsync();
+
+                        StatusMessage = "Connecting to Steam...";
+                        var initResult = await steamKitService.InitializeAsync();
+                        if (!initResult)
+                        {
+                            _notificationService.ShowError("Failed to connect to Steam. Please check your internet connection and try again.\n\nNote: This requires a connection to Steam's servers.");
+                            StatusMessage = "Installation cancelled - Steam connection failed";
+                            IsInstalling = false;
+                            return;
+                        }
+
+                        StatusMessage = "Fetching depot metadata from Steam...";
                         var steamCmdData = await steamKitService.GetDepotInfoAsync(appId);
 
                         if (steamCmdData == null)
                         {
-                            _notificationService.ShowError("Failed to fetch depot information from Steam. Cannot proceed with download.");
-                            StatusMessage = "Installation cancelled - Steam fetch failed";
+                            _notificationService.ShowError($"Failed to fetch depot information for app {appId} from Steam.\n\nThis could mean:\n• The app doesn't exist\n• Steam's servers are having issues\n• The app info is restricted\n\nPlease try again later.");
+                            StatusMessage = "Installation cancelled - App info fetch failed";
                             IsInstalling = false;
+                            steamKitService.Disconnect();
                             return;
                         }
+
+                        // Disconnect when done
+                        steamKitService.Disconnect();
 
                         // Get available languages
                         var availableLanguages = depotFilterService.GetAvailableLanguages(steamCmdData, appId);

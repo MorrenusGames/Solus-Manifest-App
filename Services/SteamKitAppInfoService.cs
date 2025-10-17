@@ -94,19 +94,21 @@ namespace SolusManifestApp.Services
                     }
                 });
 
-                // Wait for connection
-                await Task.WhenAny(connectedTcs.Task, Task.Delay(10000));
-                if (!connectedTcs.Task.IsCompleted || !await connectedTcs.Task)
+                // Wait for connection (increased timeout to 30 seconds)
+                var connectionTask = await Task.WhenAny(connectedTcs.Task, Task.Delay(30000));
+                if (connectionTask != connectedTcs.Task || !await connectedTcs.Task)
                 {
-                    _logger.Error("[SteamKit] Failed to connect to Steam (timeout)");
+                    _logger.Error("[SteamKit] Failed to connect to Steam (timeout after 30 seconds)");
+                    _steamClient?.Disconnect();
                     return false;
                 }
 
-                // Wait for login
-                await Task.WhenAny(loggedOnTcs.Task, Task.Delay(10000));
-                if (!loggedOnTcs.Task.IsCompleted || !await loggedOnTcs.Task)
+                // Wait for login (increased timeout to 30 seconds)
+                var loginTask = await Task.WhenAny(loggedOnTcs.Task, Task.Delay(30000));
+                if (loginTask != loggedOnTcs.Task || !await loggedOnTcs.Task)
                 {
-                    _logger.Error("[SteamKit] Failed to log in anonymously (timeout)");
+                    _logger.Error("[SteamKit] Failed to log in anonymously (timeout after 30 seconds)");
+                    _steamClient?.Disconnect();
                     return false;
                 }
 
@@ -144,11 +146,26 @@ namespace SolusManifestApp.Services
 
                 _logger.Info($"[SteamKit] Requesting app info for {appId}...");
 
-                // Request app info
-                var appInfoResponse = await _steamApps.PICSGetProductInfo(
+                // Request app info with timeout
+                var requestTask = _steamApps.PICSGetProductInfo(
                     new List<SteamApps.PICSRequest> { new SteamApps.PICSRequest(appId) },
                     new List<SteamApps.PICSRequest>()
-                );
+                ).ToTask();
+
+                var completedTask = await Task.WhenAny(requestTask, Task.Delay(30000));
+                if (completedTask != requestTask)
+                {
+                    _logger.Error($"[SteamKit] App info request timed out after 30 seconds for app {appId}");
+                    return null;
+                }
+
+                var appInfoResponse = await requestTask;
+
+                if (appInfoResponse == null)
+                {
+                    _logger.Error($"[SteamKit] App info response is null for app {appId}");
+                    return null;
+                }
 
                 if (appInfoResponse.Results == null || !appInfoResponse.Results.Any())
                 {
@@ -160,7 +177,7 @@ namespace SolusManifestApp.Services
 
                 if (firstResult.Apps == null || !firstResult.Apps.ContainsKey(appId))
                 {
-                    _logger.Error($"[SteamKit] App {appId} not found in results");
+                    _logger.Error($"[SteamKit] App {appId} not found in results. This app may not exist or may be restricted.");
                     return null;
                 }
 
@@ -172,7 +189,8 @@ namespace SolusManifestApp.Services
             }
             catch (Exception ex)
             {
-                _logger.Error($"[SteamKit] Error getting app info for {appId}: {ex.Message}");
+                _logger.Error($"[SteamKit] Exception getting app info for {appId}: {ex.GetType().Name} - {ex.Message}");
+                _logger.Error($"[SteamKit] Stack trace: {ex.StackTrace}");
                 return null;
             }
         }

@@ -176,21 +176,41 @@ namespace SolusManifestApp.ViewModels
                     // Fetch depot metadata directly from Steam using SteamKit2
                     _logger.Info("Step 3: Fetching depot metadata directly from Steam...");
                     var steamKitService = new SteamKitAppInfoService();
-                    await steamKitService.InitializeAsync();
+
+                    StatusMessage = "Connecting to Steam...";
+                    var initResult = await steamKitService.InitializeAsync();
+                    if (!initResult)
+                    {
+                        _logger.Error("Failed to initialize Steam connection!");
+                        MessageBoxHelper.Show(
+                            "Failed to connect to Steam. Please check your internet connection and try again.\n\nNote: This requires a connection to Steam's servers.",
+                            "Steam Connection Failed",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Error);
+                        StatusMessage = "Installation cancelled - Steam connection failed";
+                        IsInstalling = false;
+                        return;
+                    }
+
+                    StatusMessage = "Fetching depot metadata from Steam...";
                     var steamCmdData = await steamKitService.GetDepotInfoAsync(appId);
 
                     if (steamCmdData == null)
                     {
                         _logger.Error("Failed to fetch depot information from Steam!");
                         MessageBoxHelper.Show(
-                            "Failed to fetch depot information from Steam. Cannot proceed with download.",
-                            "Error",
+                            $"Failed to fetch depot information for app {appId} from Steam.\n\nThis could mean:\n• The app doesn't exist\n• Steam's servers are having issues\n• The app info is restricted\n\nPlease try again later.",
+                            "Failed to Fetch App Info",
                             MessageBoxButton.OK,
                             MessageBoxImage.Error);
-                        StatusMessage = "Installation cancelled - Steam fetch failed";
+                        StatusMessage = "Installation cancelled - App info fetch failed";
                         IsInstalling = false;
+                        steamKitService.Disconnect();
                         return;
                     }
+
+                    // Disconnect when done
+                    steamKitService.Disconnect();
 
                     _logger.Info("Steam depot data fetched successfully");
                     if (steamCmdData.Data != null && steamCmdData.Data.ContainsKey(appId))
