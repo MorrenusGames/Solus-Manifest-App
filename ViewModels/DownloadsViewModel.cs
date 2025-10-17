@@ -220,9 +220,9 @@ namespace SolusManifestApp.ViewModels
                         _logger.Info($"Total Depots in API data: {appData.Depots?.Count ?? 0}");
                     }
 
-                    // Get available languages
+                    // Get available languages (only from depots with keys)
                     _logger.Info("Step 4: Getting available languages from SteamCMD data...");
-                    var availableLanguages = depotFilterService.GetAvailableLanguages(steamCmdData, appId);
+                    var availableLanguages = depotFilterService.GetAvailableLanguages(steamCmdData, appId, parsedDepotKeys);
                     _logger.Info($"Available languages: {string.Join(", ", availableLanguages)}");
 
                     if (availableLanguages.Count == 0)

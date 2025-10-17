@@ -326,8 +326,8 @@ namespace SolusManifestApp.ViewModels
                         // Disconnect when done
                         steamKitService.Disconnect();
 
-                        // Get available languages
-                        var availableLanguages = depotFilterService.GetAvailableLanguages(steamCmdData, appId);
+                        // Get available languages (only from depots with keys)
+                        var availableLanguages = depotFilterService.GetAvailableLanguages(steamCmdData, appId, parsedDepotKeys);
 
                         if (availableLanguages.Count == 0)
                         {

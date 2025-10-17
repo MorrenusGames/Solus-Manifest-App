@@ -20,10 +20,12 @@ namespace SolusManifestApp.Services
         /// <summary>
         /// Gets available languages from SteamCMD data
         /// Port of Python's _get_available_languages() method (lines 257-271)
+        /// Only shows languages that have depots with keys
         /// </summary>
-        public List<string> GetAvailableLanguages(SteamCmdDepotData? steamCmdData, string appId)
+        public List<string> GetAvailableLanguages(SteamCmdDepotData? steamCmdData, string appId, Dictionary<string, string>? depotKeys = null)
         {
             var languages = new List<string>();
+            var hasBaseDepots = false; // Tracks if there are depots with no language (treated as English/base)
 
             if (steamCmdData?.Data == null || !steamCmdData.Data.ContainsKey(appId))
                 return new List<string> { "english" };
@@ -32,7 +34,25 @@ namespace SolusManifestApp.Services
 
             foreach (var kvp in depots)
             {
+                var depotId = kvp.Key;
                 var depotInfo = kvp.Value;
+
+                // Skip non-numeric depot IDs
+                if (!long.TryParse(depotId, out _))
+                    continue;
+
+                // If depot keys provided, only consider depots that have keys
+                if (depotKeys != null && !depotKeys.ContainsKey(depotId))
+                    continue;
+
+                // Skip depots without manifests
+                if (depotInfo.Manifests == null || !depotInfo.Manifests.Any())
+                    continue;
+
+                // Skip if all manifest values are null/empty
+                if (depotInfo.Manifests.All(m => m.Value == null || string.IsNullOrEmpty(m.Value.Gid)))
+                    continue;
+
                 if (depotInfo?.Config != null && !string.IsNullOrEmpty(depotInfo.Config.Language))
                 {
                     var lang = depotInfo.Config.Language;
@@ -41,12 +61,24 @@ namespace SolusManifestApp.Services
                         languages.Add(lang);
                     }
                 }
+                else
+                {
+                    // Depot has no language specified - this counts as base/English depot
+                    hasBaseDepots = true;
+                }
             }
 
-            // Always include English first (Python line 269-271)
-            if (!languages.Contains("english"))
+            // Only include English if there are base depots (no language) OR explicit English depots
+            if ((hasBaseDepots || languages.Contains("english")) && !languages.Contains("english"))
             {
                 languages.Insert(0, "english");
+            }
+
+            // If no languages found at all (shouldn't happen but safeguard)
+            if (languages.Count == 0)
+            {
+                _logger.Warning("No languages found in depots - defaulting to 'english'");
+                return new List<string> { "english" };
             }
 
             return languages.OrderBy(l => l).ToList();
