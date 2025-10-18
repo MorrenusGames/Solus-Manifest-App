@@ -59,6 +59,9 @@ namespace SolusManifestApp.Services
 
         [JsonProperty("lowviolence")]
         public string? LowViolence { get; set; }
+
+        [JsonProperty("realm")]
+        public string? Realm { get; set; }
     }
 
     public class ManifestData

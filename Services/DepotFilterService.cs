@@ -54,6 +54,10 @@ namespace SolusManifestApp.Services
                 if (depotInfo.Manifests.All(m => m.Value == null || string.IsNullOrEmpty(m.Value.Gid)))
                     continue;
 
+                // Skip depots with steamchina realm
+                if (depotInfo?.Config?.Realm != null && depotInfo.Config.Realm.Equals("steamchina", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
                 if (depotInfo?.Config != null && !string.IsNullOrEmpty(depotInfo.Config.Language))
                 {
                     var lang = depotInfo.Config.Language;
@@ -164,6 +168,13 @@ namespace SolusManifestApp.Services
                 {
                     var config = depotInfo.Config;
 
+                    // Filter: SteamChina realm
+                    if (config.Realm != null && config.Realm.Equals("steamchina", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.Debug($"Skipping depot {depotId} - steamchina realm");
+                        continue;
+                    }
+
                     // Filter: Low violence (Python line 378-380)
                     if (config.LowViolence == "1")
                     {
@@ -254,6 +265,13 @@ namespace SolusManifestApp.Services
                 {
                     var config = depotInfo.Config;
 
+                    // Filter: SteamChina realm
+                    if (config.Realm != null && config.Realm.Equals("steamchina", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.Debug($"Skipping DLC depot {depotId} - steamchina realm");
+                        continue;
+                    }
+
                     // Same filters as main depots
                     if (config.LowViolence == "1")
                     {
@@ -328,6 +346,13 @@ namespace SolusManifestApp.Services
                 if (depotInfo.Config != null)
                 {
                     var config = depotInfo.Config;
+
+                    // Filter: SteamChina realm
+                    if (config.Realm != null && config.Realm.Equals("steamchina", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.Debug($"Skipping shared depot {depotId} - steamchina realm");
+                        continue;
+                    }
 
                     // Same filters
                     if (config.LowViolence == "1")
