@@ -5,7 +5,7 @@
 **A comprehensive Steam depot and manifest management tool**
 
 [![Build and Release](https://github.com/MorrenusGames/Solus-Manifest-App/workflows/Build%20and%20Release/badge.svg)](https://github.com/MorrenusGames/Solus-Manifest-App/actions)
-[![Latest Release](https://github.com/MorrenusGames/Solus-Manifest-App/releases/latest/badge.svg)](https://github.com/MorrenusGames/Solus-Manifest-App/releases)
+[![Latest Release](https://img.shields.io/github/v/release/MorrenusGames/Solus-Manifest-App)](https://github.com/MorrenusGames/Solus-Manifest-App/releases/latest)
 
 </div>
 
