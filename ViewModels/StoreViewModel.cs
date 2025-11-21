@@ -18,6 +18,7 @@ namespace SolusManifestApp.ViewModels
         private readonly DownloadService _downloadService;
         private readonly SettingsService _settingsService;
         private readonly CacheService _cacheService;
+        private readonly NotificationService _notificationService;
         private readonly SemaphoreSlim _iconLoadSemaphore = new SemaphoreSlim(10, 10); // Max 10 concurrent downloads
 
         [ObservableProperty]
@@ -65,12 +66,14 @@ namespace SolusManifestApp.ViewModels
             ManifestApiService manifestApiService,
             DownloadService downloadService,
             SettingsService settingsService,
-            CacheService cacheService)
+            CacheService cacheService,
+            NotificationService notificationService)
         {
             _manifestApiService = manifestApiService;
             _downloadService = downloadService;
             _settingsService = settingsService;
             _cacheService = cacheService;
+            _notificationService = notificationService;
 
             // Auto-load games on startup
             _ = InitializeAsync();
@@ -83,6 +86,19 @@ namespace SolusManifestApp.ViewModels
             if (!string.IsNullOrEmpty(settings.ApiKey))
             {
                 await LoadGamesAsync();
+            }
+            else
+            {
+                StatusMessage = "API key required - Please configure in Settings";
+                // Show warning popup when user first opens Store without API key
+                Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    MessageBoxHelper.Show(
+                        "An API key is required to use the Store.\n\nPlease go to Settings and enter your API key to browse and download games from the library.",
+                        "API Key Required",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                });
             }
         }
 
@@ -112,6 +128,11 @@ namespace SolusManifestApp.ViewModels
             if (string.IsNullOrEmpty(settings.ApiKey))
             {
                 StatusMessage = "Please enter API key in settings";
+                MessageBoxHelper.Show(
+                    "An API key is required to use the Store.\n\nPlease go to Settings and enter your API key to browse and download games from the library.",
+                    "API Key Required",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
                 return;
             }
 

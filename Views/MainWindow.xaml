@@ -17,7 +17,7 @@
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="50"
                       ResizeBorderThickness="5"
-                      CornerRadius="12"
+                      CornerRadius="0"
                       GlassFrameThickness="0"
                       UseAeroCaptionButtons="False"/>
     </WindowChrome.WindowChrome>
@@ -26,7 +26,7 @@
     </Window.Resources>
 
     <Border Background="{DynamicResource PrimaryDarkBrush}"
-            CornerRadius="12"
+            CornerRadius="0"
             BorderBrush="{DynamicResource SecondaryDarkBrush}"
             BorderThickness="1">
         <Grid>
@@ -41,7 +41,7 @@
             <!-- Custom Title Bar -->
             <Border Grid.Row="0"
                     Background="{DynamicResource CardBackgroundBrush}"
-                    CornerRadius="12,12,0,0"
+                    CornerRadius="0"
                     MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <Grid>
                     <StackPanel Orientation="Horizontal"

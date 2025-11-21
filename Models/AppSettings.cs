@@ -69,8 +69,8 @@ namespace SolusManifestApp.Models
         public int StorePageSize { get; set; } = 20;
         public int LibraryPageSize { get; set; } = 20;
         public bool RememberWindowPosition { get; set; } = true;
-        public double WindowLeft { get; set; } = double.NaN;
-        public double WindowTop { get; set; } = double.NaN;
+        public double? WindowLeft { get; set; } = null;
+        public double? WindowTop { get; set; } = null;
 
         // Auto-Update
         public bool AutoCheckUpdates { get; set; } = true; // Legacy - kept for compatibility

@@ -83,10 +83,10 @@ namespace SolusManifestApp.ViewModels
         private bool _rememberWindowPosition;
 
         [ObservableProperty]
-        private double _windowLeft;
+        private double? _windowLeft;
 
         [ObservableProperty]
-        private double _windowTop;
+        private double? _windowTop;
 
         [ObservableProperty]
         private string _statusMessage = "Ready";
@@ -204,8 +204,8 @@ namespace SolusManifestApp.ViewModels
         partial void OnStorePageSizeChanged(int value) => MarkAsUnsaved();
         partial void OnLibraryPageSizeChanged(int value) => MarkAsUnsaved();
         partial void OnRememberWindowPositionChanged(bool value) => MarkAsUnsaved();
-        partial void OnWindowLeftChanged(double value) => MarkAsUnsaved();
-        partial void OnWindowTopChanged(double value) => MarkAsUnsaved();
+        partial void OnWindowLeftChanged(double? value) => MarkAsUnsaved();
+        partial void OnWindowTopChanged(double? value) => MarkAsUnsaved();
         partial void OnSelectedThemeNameChanged(string value) => MarkAsUnsaved();
         partial void OnUseDefaultInstallLocationChanged(bool value) => MarkAsUnsaved();
         partial void OnSelectedLibraryFolderChanged(string value) => MarkAsUnsaved();
