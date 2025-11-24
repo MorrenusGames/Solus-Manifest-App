@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using SolusManifestApp.Services;
 using SolusManifestApp.Services.GBE;
 using System;
 using System.IO;
@@ -11,11 +12,24 @@ namespace SolusManifestApp.ViewModels
 {
     public partial class GBEDenuvoViewModel : ObservableObject
     {
+        private readonly SettingsService _settingsService;
+
         [ObservableProperty]
         private string _appId = string.Empty;
 
         [ObservableProperty]
-        private string _outputPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        private string _outputPath = string.Empty;
+
+        public GBEDenuvoViewModel()
+        {
+            _settingsService = new SettingsService();
+            var settings = _settingsService.LoadSettings();
+
+            // Load saved path or use Desktop as default
+            OutputPath = !string.IsNullOrEmpty(settings.GBETokenOutputPath)
+                ? settings.GBETokenOutputPath
+                : Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        }
 
         [ObservableProperty]
         private string _logOutput = "Ready to generate tokens. Make sure Steam is running and you own the game.\n";
@@ -42,6 +56,11 @@ namespace SolusManifestApp.ViewModels
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 OutputPath = dialog.SelectedPath;
+
+                // Save to settings
+                var settings = _settingsService.LoadSettings();
+                settings.GBETokenOutputPath = OutputPath;
+                _settingsService.SaveSettings(settings);
             }
         }
 

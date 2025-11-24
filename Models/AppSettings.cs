@@ -93,6 +93,9 @@ namespace SolusManifestApp.Models
         public bool VerifyFilesAfterDownload { get; set; } = true;
         public int MaxConcurrentDownloads { get; set; } = 8;
 
+        // GBE Token Generator Configuration
+        public string GBETokenOutputPath { get; set; } = string.Empty;
+
         // Notification Preferences
         public bool ShowGameAddedNotification { get; set; } = true;
 
