@@ -8,8 +8,7 @@
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <AssemblyName>SolusManifestApp</AssemblyName>
     <RootNamespace>SolusManifestApp</RootNamespace>
-    <Version>0.0.0.0</Version>
-    <!-- Version is auto-set by GitHub Actions from git tag -->
+    <Version Condition="'$(Version)' == ''">0.0.0.0</Version>
     <Authors>Solus</Authors>
     <Description>Solus Manifest App</Description>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -43,6 +42,12 @@
   <ItemGroup>
     <!-- Keep Resources folder external for single-file -->
     <None Update="Resources\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </None>
+
+    <!-- GBE lib files - must be external for DLL loading -->
+    <None Update="lib\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </None>

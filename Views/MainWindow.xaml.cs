@@ -30,10 +30,8 @@ namespace SolusManifestApp.Views
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            if (DataContext is MainViewModel viewModel)
-            {
-                viewModel.CheckForUpdates();
-            }
+            // Update check is now handled by App.xaml.cs based on AutoUpdate settings
+            // No need to check here on every startup
         }
 
         private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
