@@ -17,6 +17,7 @@
     <converters:ImagePathConverter x:Key="ImagePathConverter"/>
     <converters:BoolToViewIconConverter x:Key="BoolToViewIconConverter"/>
     <converters:BoolToViewTextConverter x:Key="BoolToViewTextConverter"/>
+    <converters:EqualityConverter x:Key="EqualityConverter"/>
 
     <!-- Colors and brushes are now loaded from theme files dynamically -->
 

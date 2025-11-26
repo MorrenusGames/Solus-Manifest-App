@@ -74,19 +74,50 @@ namespace SolusManifestApp.ViewModels
             IsGreenLumaMode = settings.Mode == ToolMode.GreenLuma;
         }
 
+        [ObservableProperty]
+        private List<string> _selectedFiles = new();
+
         [RelayCommand]
         private void ProcessDroppedFiles(string[] files)
         {
             if (files == null || files.Length == 0)
                 return;
 
-            var file = files.FirstOrDefault(f =>
+            var validFiles = files.Where(f =>
                 f.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ||
                 f.EndsWith(".lua", StringComparison.OrdinalIgnoreCase) ||
-                f.EndsWith(".manifest", StringComparison.OrdinalIgnoreCase));
+                f.EndsWith(".manifest", StringComparison.OrdinalIgnoreCase)).ToList();
 
-            if (file != null)
+            if (validFiles.Count == 0)
             {
+                _notificationService.ShowWarning("Please drop a .zip, .lua, or .manifest file");
+                return;
+            }
+
+            var settings = _settingsService.LoadSettings();
+
+            if (settings.Mode == ToolMode.SteamTools && validFiles.Count > 1)
+            {
+                SelectedFiles = validFiles;
+                SelectedFilePath = string.Join(";", validFiles);
+                SelectedFileName = $"{validFiles.Count} files selected";
+                HasFileSelected = true;
+
+                var luaCount = validFiles.Count(f => f.EndsWith(".lua", StringComparison.OrdinalIgnoreCase));
+                var zipCount = validFiles.Count(f => f.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
+                var manifestCount = validFiles.Count(f => f.EndsWith(".manifest", StringComparison.OrdinalIgnoreCase));
+
+                var parts = new List<string>();
+                if (zipCount > 0) parts.Add($"{zipCount} zip(s)");
+                if (luaCount > 0) parts.Add($"{luaCount} lua(s)");
+                if (manifestCount > 0) parts.Add($"{manifestCount} manifest(s)");
+
+                StatusMessage = $"Ready to install: {string.Join(", ", parts)}";
+            }
+            else
+            {
+                var file = validFiles.First();
+                SelectedFiles = new List<string> { file };
                 SelectedFilePath = file;
                 SelectedFileName = Path.GetFileName(file);
                 HasFileSelected = true;
@@ -104,38 +135,66 @@ namespace SolusManifestApp.ViewModels
                     StatusMessage = $"Ready to install: {SelectedFileName}";
                 }
             }
-            else
-            {
-                _notificationService.ShowWarning("Please drop a .zip, .lua, or .manifest file");
-            }
         }
 
         [RelayCommand]
         private void BrowseFile()
         {
+            var settings = _settingsService.LoadSettings();
             var dialog = new Microsoft.Win32.OpenFileDialog
             {
                 Filter = "Supported Files (*.zip;*.lua;*.manifest)|*.zip;*.lua;*.manifest|Lua Archives (*.zip)|*.zip|Lua Files (*.lua)|*.lua|Manifest Files (*.manifest)|*.manifest|All files (*.*)|*.*",
-                Title = "Select File to Install"
+                Title = "Select File to Install",
+                Multiselect = settings.Mode == ToolMode.SteamTools
             };
 
             if (dialog.ShowDialog() == true)
             {
-                SelectedFilePath = dialog.FileName;
-                SelectedFileName = Path.GetFileName(dialog.FileName);
-                HasFileSelected = true;
+                var validFiles = dialog.FileNames.Where(f =>
+                    f.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ||
+                    f.EndsWith(".lua", StringComparison.OrdinalIgnoreCase) ||
+                    f.EndsWith(".manifest", StringComparison.OrdinalIgnoreCase)).ToList();
 
-                if (dialog.FileName.EndsWith(".manifest", StringComparison.OrdinalIgnoreCase))
+                if (validFiles.Count == 0) return;
+
+                if (settings.Mode == ToolMode.SteamTools && validFiles.Count > 1)
                 {
-                    StatusMessage = $"Ready to install manifest: {SelectedFileName}";
-                }
-                else if (dialog.FileName.EndsWith(".lua", StringComparison.OrdinalIgnoreCase))
-                {
-                    StatusMessage = $"Ready to install Lua file: {SelectedFileName}";
+                    SelectedFiles = validFiles;
+                    SelectedFilePath = string.Join(";", validFiles);
+                    SelectedFileName = $"{validFiles.Count} files selected";
+                    HasFileSelected = true;
+
+                    var luaCount = validFiles.Count(f => f.EndsWith(".lua", StringComparison.OrdinalIgnoreCase));
+                    var zipCount = validFiles.Count(f => f.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
+                    var manifestCount = validFiles.Count(f => f.EndsWith(".manifest", StringComparison.OrdinalIgnoreCase));
+
+                    var parts = new List<string>();
+                    if (zipCount > 0) parts.Add($"{zipCount} zip(s)");
+                    if (luaCount > 0) parts.Add($"{luaCount} lua(s)");
+                    if (manifestCount > 0) parts.Add($"{manifestCount} manifest(s)");
+
+                    StatusMessage = $"Ready to install: {string.Join(", ", parts)}";
                 }
                 else
                 {
-                    StatusMessage = $"Ready to install: {SelectedFileName}";
+                    var file = validFiles.First();
+                    SelectedFiles = new List<string> { file };
+                    SelectedFilePath = file;
+                    SelectedFileName = Path.GetFileName(file);
+                    HasFileSelected = true;
+
+                    if (file.EndsWith(".manifest", StringComparison.OrdinalIgnoreCase))
+                    {
+                        StatusMessage = $"Ready to install manifest: {SelectedFileName}";
+                    }
+                    else if (file.EndsWith(".lua", StringComparison.OrdinalIgnoreCase))
+                    {
+                        StatusMessage = $"Ready to install Lua file: {SelectedFileName}";
+                    }
+                    else
+                    {
+                        StatusMessage = $"Ready to install: {SelectedFileName}";
+                    }
                 }
             }
         }
@@ -143,7 +202,15 @@ namespace SolusManifestApp.ViewModels
         [RelayCommand]
         private async Task InstallFile()
         {
-            if (string.IsNullOrEmpty(SelectedFilePath) || !File.Exists(SelectedFilePath))
+            var settings = _settingsService.LoadSettings();
+
+            if (settings.Mode == ToolMode.SteamTools && SelectedFiles.Count > 1)
+            {
+                await InstallMultipleFilesAsync();
+                return;
+            }
+
+            if (string.IsNullOrEmpty(SelectedFilePath) || (!File.Exists(SelectedFilePath) && !SelectedFilePath.Contains(";")))
             {
                 _notificationService.ShowError("Please select a valid file first");
                 return;
@@ -154,8 +221,6 @@ namespace SolusManifestApp.ViewModels
 
             try
             {
-                var settings = _settingsService.LoadSettings();
-
                 if (SelectedFilePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
                 {
                     // Extract appId from filename (e.g., 224060.zip -> 224060)
@@ -555,11 +620,97 @@ namespace SolusManifestApp.ViewModels
             }
         }
 
+        private async Task InstallMultipleFilesAsync()
+        {
+            if (SelectedFiles.Count == 0)
+            {
+                _notificationService.ShowError("No files selected");
+                return;
+            }
+
+            IsInstalling = true;
+            int successCount = 0;
+            int failCount = 0;
+            var installedAppIds = new List<string>();
+
+            try
+            {
+                var settings = _settingsService.LoadSettings();
+
+                for (int i = 0; i < SelectedFiles.Count; i++)
+                {
+                    var file = SelectedFiles[i];
+                    if (!File.Exists(file)) continue;
+
+                    StatusMessage = $"Installing {i + 1}/{SelectedFiles.Count}: {Path.GetFileName(file)}...";
+
+                    try
+                    {
+                        if (file.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var appId = Path.GetFileNameWithoutExtension(file);
+                            await _fileInstallService.InstallFromZipAsync(file, false, msg => StatusMessage = msg);
+                            installedAppIds.Add(appId);
+                            successCount++;
+                        }
+                        else if (file.EndsWith(".lua", StringComparison.OrdinalIgnoreCase))
+                        {
+                            await _fileInstallService.InstallLuaFileAsync(file);
+                            var appId = Path.GetFileNameWithoutExtension(file);
+                            installedAppIds.Add(appId);
+                            successCount++;
+                        }
+                        else if (file.EndsWith(".manifest", StringComparison.OrdinalIgnoreCase))
+                        {
+                            await _fileInstallService.InstallManifestFileAsync(file);
+                            successCount++;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error($"Failed to install {Path.GetFileName(file)}: {ex.Message}");
+                        failCount++;
+                    }
+                }
+
+                foreach (var appId in installedAppIds.Distinct())
+                {
+                    _libraryRefreshService.NotifyGameInstalled(appId, false);
+                }
+
+                if (failCount == 0)
+                {
+                    _notificationService.ShowSuccess($"All {successCount} files installed successfully!\n\nRestart Steam for changes to take effect.");
+                    StatusMessage = "Installation complete! Restart Steam for changes to take effect.";
+                }
+                else
+                {
+                    _notificationService.ShowWarning($"Installed {successCount} files, {failCount} failed.\n\nRestart Steam for changes to take effect.");
+                    StatusMessage = $"Partial installation: {successCount} succeeded, {failCount} failed";
+                }
+
+                SelectedFilePath = string.Empty;
+                SelectedFileName = "No file selected";
+                SelectedFiles.Clear();
+                HasFileSelected = false;
+            }
+            catch (Exception ex)
+            {
+                _notificationService.ShowError($"Installation failed: {ex.Message}");
+                StatusMessage = $"Installation failed: {ex.Message}";
+            }
+            finally
+            {
+                IsInstalling = false;
+            }
+        }
+
         [RelayCommand]
         private void ClearSelection()
         {
             SelectedFilePath = string.Empty;
             SelectedFileName = "No file selected";
+            SelectedFiles.Clear();
             HasFileSelected = false;
             StatusMessage = "Drop a .zip, .lua, or .manifest file here to install";
         }

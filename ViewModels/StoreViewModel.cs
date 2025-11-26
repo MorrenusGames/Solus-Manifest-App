@@ -61,6 +61,12 @@ namespace SolusManifestApp.ViewModels
         [ObservableProperty]
         private bool _isListView;
 
+        [ObservableProperty]
+        private string _goToPageText = string.Empty;
+
+        [ObservableProperty]
+        private ObservableCollection<int> _pageNumbers = new();
+
         private int PageSize => _settingsService.LoadSettings().StorePageSize;
 
         public Action? ScrollToTopAction { get; set; }
@@ -177,6 +183,64 @@ namespace SolusManifestApp.ViewModels
             Games.Clear();
             await LoadGamesAsync();
             ScrollToTopAction?.Invoke();
+        }
+
+        [RelayCommand]
+        private async Task GoToPage(int pageNumber)
+        {
+            if (pageNumber < 1 || pageNumber > TotalPages || pageNumber == CurrentPage || IsLoading) return;
+
+            CurrentPage = pageNumber;
+            CurrentOffset = (CurrentPage - 1) * PageSize;
+            Games.Clear();
+            await LoadGamesAsync();
+            ScrollToTopAction?.Invoke();
+        }
+
+        [RelayCommand]
+        private async Task GoToPageFromText()
+        {
+            if (string.IsNullOrWhiteSpace(GoToPageText) || IsLoading) return;
+
+            if (int.TryParse(GoToPageText, out int pageNumber))
+            {
+                if (pageNumber >= 1 && pageNumber <= TotalPages && pageNumber != CurrentPage)
+                {
+                    CurrentPage = pageNumber;
+                    CurrentOffset = (CurrentPage - 1) * PageSize;
+                    Games.Clear();
+                    await LoadGamesAsync();
+                    ScrollToTopAction?.Invoke();
+                }
+            }
+            GoToPageText = string.Empty;
+        }
+
+        private void UpdatePageNumbers()
+        {
+            PageNumbers.Clear();
+            if (TotalPages <= 0) return;
+
+            int maxVisiblePages = 7;
+            int startPage = 1;
+            int endPage = TotalPages;
+
+            if (TotalPages > maxVisiblePages)
+            {
+                int halfVisible = maxVisiblePages / 2;
+                startPage = System.Math.Max(1, CurrentPage - halfVisible);
+                endPage = System.Math.Min(TotalPages, startPage + maxVisiblePages - 1);
+
+                if (endPage - startPage < maxVisiblePages - 1)
+                {
+                    startPage = System.Math.Max(1, endPage - maxVisiblePages + 1);
+                }
+            }
+
+            for (int i = startPage; i <= endPage; i++)
+            {
+                PageNumbers.Add(i);
+            }
         }
 
         [RelayCommand]
@@ -299,6 +363,7 @@ namespace SolusManifestApp.ViewModels
 
                     CanGoPrevious = CurrentPage > 1;
                     CanGoNext = CurrentPage < TotalPages;
+                    UpdatePageNumbers();
 
                     var startIndex = CurrentOffset + 1;
                     var endIndex = System.Math.Min(CurrentOffset + result.Games.Count, TotalCount);
@@ -314,6 +379,7 @@ namespace SolusManifestApp.ViewModels
                     TotalPages = 0;
                     CanGoPrevious = false;
                     CanGoNext = false;
+                    UpdatePageNumbers();
                 }
             }
             catch (System.Exception ex)
