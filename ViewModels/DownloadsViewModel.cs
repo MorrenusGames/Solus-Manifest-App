@@ -270,30 +270,34 @@ namespace SolusManifestApp.ViewModels
 
                     _logger.Info($"User selected language: {languageDialog.SelectedLanguage}");
 
-                    // Filter depots using Python-style logic
-                    StatusMessage = $"Filtering depots for language: {languageDialog.SelectedLanguage}...";
-                    _logger.Info($"Step 6: Filtering depots for language '{languageDialog.SelectedLanguage}' using Python-style logic...");
-                    var filteredDepotIds = depotFilterService.GetDepotsForLanguage(
-                        steamCmdData,
-                        parsedDepotKeys,
-                        languageDialog.SelectedLanguage,
-                        appId);
+                    List<string> filteredDepotIds;
 
-                    if (filteredDepotIds.Count == 0)
+                    if (languageDialog.SelectedLanguage == "All (Skip Filter)")
                     {
-                        _logger.Error("No depots matched the selected language!");
-                        MessageBoxHelper.Show(
-                            "No depots matched the selected language. Cannot proceed with download.",
-                            "Error",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Error);
-                        StatusMessage = "Installation cancelled - No matching depots";
-                        IsInstalling = false;
-                        return;
+                        _logger.Info("User selected 'All (Skip Filter)' - using all depots from Lua file");
+                        filteredDepotIds = parsedDepotKeys.Keys.ToList();
+                        StatusMessage = $"Using all {filteredDepotIds.Count} depots from Lua file...";
+                    }
+                    else
+                    {
+                        StatusMessage = $"Filtering depots for language: {languageDialog.SelectedLanguage}...";
+                        _logger.Info($"Step 6: Filtering depots for language '{languageDialog.SelectedLanguage}' using Python-style logic...");
+                        filteredDepotIds = depotFilterService.GetDepotsForLanguage(
+                            steamCmdData,
+                            parsedDepotKeys,
+                            languageDialog.SelectedLanguage,
+                            appId);
+
+                        if (filteredDepotIds.Count == 0)
+                        {
+                            _logger.Warning("No depots matched the selected language - falling back to all depots from Lua file");
+                            _notificationService.ShowWarning("Language filter returned no depots. Showing all available depots from the Lua file.");
+                            filteredDepotIds = parsedDepotKeys.Keys.ToList();
+                        }
                     }
 
-                    _logger.Info($"Filtered depot list contains {filteredDepotIds.Count} depots: {string.Join(", ", filteredDepotIds)}");
-                    StatusMessage = $"Found {filteredDepotIds.Count} depots for {languageDialog.SelectedLanguage}. Preparing depot selection...";
+                    _logger.Info($"Depot list contains {filteredDepotIds.Count} depots: {string.Join(", ", filteredDepotIds)}");
+                    StatusMessage = $"Found {filteredDepotIds.Count} depots. Preparing depot selection...";
 
                     // Parse depot names from lua content for friendly display
                     var luaParser = new LuaParser();

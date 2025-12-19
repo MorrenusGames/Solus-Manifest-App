@@ -13,15 +13,19 @@ namespace SolusManifestApp.Views.Dialogs
         {
             InitializeComponent();
 
-            // Populate list
-            LanguageListBox.ItemsSource = availableLanguages;
+            var languagesWithAll = new List<string> { "All (Skip Filter)" };
+            languagesWithAll.AddRange(availableLanguages);
+            LanguageListBox.ItemsSource = languagesWithAll;
 
-            // Select English by default
-            if (availableLanguages.Contains("english"))
+            if (availableLanguages.Contains("English"))
             {
-                LanguageListBox.SelectedItem = "english";
+                LanguageListBox.SelectedItem = "English";
             }
             else if (availableLanguages.Any())
+            {
+                LanguageListBox.SelectedIndex = 1;
+            }
+            else
             {
                 LanguageListBox.SelectedIndex = 0;
             }
