@@ -59,7 +59,7 @@ Solus Manifest App is a powerful Windows desktop application for managing Steam 
 - **Auto-Updates**: Three modes - Disabled, Check Only, Auto Download & Install
 - **System Tray**: Minimize to tray with quick access menu
 - **Toast Notifications**: Native Windows 10+ notifications (can be disabled)
-- **Protocol Handler**: `solus://` URLs for quick downloads
+- **Protocol Handler**: `solusapp://` URI scheme for quick actions
 - **Single Instance**: Prevents multiple app instances
 - **Settings Backup**: Export and import settings and mod lists
 
@@ -98,6 +98,22 @@ Settings are stored in `%AppData%\SolusManifestApp` and include:
 | Notifications | Enable/disable toasts and popups |
 | Auto-Update | Disabled, Check Only, Auto Download & Install |
 | Keys | Auto-upload config keys to community database (hourly) |
+
+## URI Scheme
+
+The app registers a `solusapp://` protocol handler for quick actions from web browsers or other applications.
+
+| URL Format | Action |
+|------------|--------|
+| `solusapp://download/{appId}` | Download manifest for the specified App ID |
+| `solusapp://install/{appId}` | Install a previously downloaded game |
+| `solusapp://download/install/{appId}` | Download and install in one step |
+
+**Examples:**
+- `solusapp://download/400` - Downloads Half-Life 2 manifest
+- `solusapp://download/install/400` - Downloads and installs Half-Life 2
+
+The protocol is automatically registered on first launch and updates if the app location changes.
 
 ## Technology
 
