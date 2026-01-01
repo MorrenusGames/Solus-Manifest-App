@@ -170,34 +170,7 @@ namespace SolusManifestApp.Services
                     throw new Exception("steam.exe not found");
                 }
 
-                // Check if GreenLuma mode is enabled (Normal or StealthAnyFolder)
-                bool isGreenLumaMode = settings.Mode == ToolMode.GreenLuma &&
-                                      (settings.GreenLumaSubMode == GreenLumaMode.Normal ||
-                                       settings.GreenLumaSubMode == GreenLumaMode.StealthAnyFolder);
-
-                if (isGreenLumaMode && !string.IsNullOrEmpty(settings.DLLInjectorPath))
-                {
-                    // Use DLL Injector to start Steam
-                    if (File.Exists(settings.DLLInjectorPath))
-                    {
-                        var startInfo = new System.Diagnostics.ProcessStartInfo
-                        {
-                            FileName = settings.DLLInjectorPath,
-                            WorkingDirectory = Path.GetDirectoryName(settings.DLLInjectorPath),
-                            UseShellExecute = false
-                        };
-                        System.Diagnostics.Process.Start(startInfo);
-                    }
-                    else
-                    {
-                        throw new Exception($"DLLInjector not found at: {settings.DLLInjectorPath}");
-                    }
-                }
-                else
-                {
-                    // Start Steam normally
-                    System.Diagnostics.Process.Start(steamExe);
-                }
+                System.Diagnostics.Process.Start(steamExe);
             }
             catch (Exception ex)
             {

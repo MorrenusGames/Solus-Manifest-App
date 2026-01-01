@@ -137,7 +137,6 @@ namespace SolusManifestApp.Services
                     var existsInOtherProfile = data.Profiles.Any(p => p.Id != profileId && p.Games.Any(g => g.AppId == game.AppId));
                     if (!existsInOtherProfile)
                     {
-                        await _fileInstallService.UninstallGreenLumaGameAsync(game.AppId, appListPath);
                         uninstalledAppIds.Add(game.AppId);
                     }
                 }
@@ -245,8 +244,6 @@ namespace SolusManifestApp.Services
                 var existsInOtherProfile = data.Profiles.Any(p => p.Id != profileId && p.Games.Any(g => g.AppId == appId));
                 if (!existsInOtherProfile)
                 {
-                    var appListPath = GetAppListPath();
-                    await _fileInstallService.UninstallGreenLumaGameAsync(appId, appListPath);
                     _libraryRefreshService.NotifyGameUninstalled(appId);
                     wasUninstalled = true;
                     _logger.Info($"Uninstalled game {appId} (not in any other profile)");
@@ -269,17 +266,6 @@ namespace SolusManifestApp.Services
 
         private string GetAppListPath()
         {
-            var settings = _settingsService.LoadSettings();
-
-            if (settings.GreenLumaSubMode == GreenLumaMode.StealthAnyFolder)
-            {
-                var injectorDir = Path.GetDirectoryName(settings.DLLInjectorPath);
-                if (!string.IsNullOrEmpty(injectorDir))
-                {
-                    return Path.Combine(injectorDir, "AppList");
-                }
-            }
-
             var steamPath = _steamService.GetSteamPath();
             if (!string.IsNullOrEmpty(steamPath))
             {
@@ -601,13 +587,11 @@ namespace SolusManifestApp.Services
                 data.Profiles.Add(export.Profile);
                 SaveProfiles();
 
-                var settings = _settingsService.LoadSettings();
-                string? libraryFolder = settings.UseDefaultInstallLocation ? null : settings.SelectedLibraryFolder;
                 int acfCount = 0;
 
                 foreach (var game in export.Profile.Games)
                 {
-                    _fileInstallService.GenerateACF(game.AppId, game.AppId, game.Name, libraryFolder);
+                    _fileInstallService.GenerateACF(game.AppId, game.AppId, game.Name, null);
                     acfCount++;
                 }
 

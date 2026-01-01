@@ -1,10 +1,8 @@
 using SolusManifestApp.Models;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace SolusManifestApp.Services
@@ -13,16 +11,14 @@ namespace SolusManifestApp.Services
     {
         private readonly SteamService _steamService;
         private readonly LoggerService _logger;
-        private readonly AppInfoService _appInfoService;
 
         public FileInstallService(SteamService steamService, LoggerService logger)
         {
             _steamService = steamService;
             _logger = logger;
-            _appInfoService = new AppInfoService(steamService, logger);
         }
 
-        public async Task<Dictionary<string, string>> InstallFromZipAsync(string zipPath, bool isGreenLumaMode, Action<string>? progressCallback = null, List<string>? selectedDepotIds = null)
+        public async Task<Dictionary<string, string>> InstallFromZipAsync(string zipPath, Action<string>? progressCallback = null)
         {
             var depotKeys = new Dictionary<string, string>();
 
@@ -30,18 +26,15 @@ namespace SolusManifestApp.Services
             {
                 progressCallback?.Invoke("Extracting ZIP file...");
 
-                // Create temp directory
                 var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
                 Directory.CreateDirectory(tempDir);
 
                 try
                 {
-                    // Extract ZIP
                     await Task.Run(() => ZipFile.ExtractToDirectory(zipPath, tempDir));
 
                     progressCallback?.Invoke("Installing files...");
 
-                    // Find all .lua and .manifest files
                     var luaFiles = Directory.GetFiles(tempDir, "*.lua", SearchOption.AllDirectories);
                     var manifestFiles = Directory.GetFiles(tempDir, "*.manifest", SearchOption.AllDirectories);
 
@@ -50,99 +43,40 @@ namespace SolusManifestApp.Services
                         throw new Exception("No .lua files found in ZIP");
                     }
 
-                    // If GreenLuma mode, extract depot keys from .lua file in temp (don't install it)
-                    if (isGreenLumaMode && luaFiles.Length > 0)
+                    _logger.Info("Installing .lua files to stplug-in");
+                    var stpluginPath = _steamService.GetStPluginPath();
+                    if (string.IsNullOrEmpty(stpluginPath))
                     {
-                        progressCallback?.Invoke("Extracting depot keys from .lua file...");
-                        depotKeys = ExtractDepotKeysFromLua(luaFiles[0]);
-
-                        _logger.Debug($"Extracted {depotKeys.Count} depot keys before filtering");
-
-                        // Extract main appID from lua filename (e.g., "12345.lua" -> "12345")
-                        var luaFileName = Path.GetFileNameWithoutExtension(luaFiles[0]);
-                        string? mainAppId = null;
-                        if (int.TryParse(luaFileName, out _))
-                        {
-                            mainAppId = luaFileName;
-                            _logger.Debug($"Detected main AppID from lua filename: {mainAppId}");
-                        }
-
-                        // Filter depot keys to only include selected depots if provided
-                        if (selectedDepotIds != null && selectedDepotIds.Count > 0)
-                        {
-                            _logger.Debug($"Filtering depot keys to {selectedDepotIds.Count} selected depot IDs: {string.Join(", ", selectedDepotIds)}");
-                            var filteredKeys = new Dictionary<string, string>();
-
-                            // Always include the main AppID key if it exists
-                            if (mainAppId != null && depotKeys.ContainsKey(mainAppId))
-                            {
-                                filteredKeys[mainAppId] = depotKeys[mainAppId];
-                                _logger.Debug($"Including main AppID {mainAppId} depot key");
-                            }
-
-                            foreach (var depotId in selectedDepotIds)
-                            {
-                                if (depotKeys.ContainsKey(depotId))
-                                {
-                                    filteredKeys[depotId] = depotKeys[depotId];
-                                    _logger.Debug($"Including depot {depotId}");
-                                }
-                                else
-                                {
-                                    _logger.Debug($"Depot {depotId} not found in extracted keys");
-                                }
-                            }
-                            depotKeys = filteredKeys;
-                            _logger.Debug($"After filtering: {depotKeys.Count} depot keys (including main AppID if present)");
-                        }
-                    }
-                    else
-                    {
-                        // SteamTools mode: Install .lua files to stplug-in
-                        _logger.Info("SteamTools mode: Installing .lua files to stplug-in");
-                        var stpluginPath = _steamService.GetStPluginPath();
-                        if (string.IsNullOrEmpty(stpluginPath))
-                        {
-                            _logger.Error("Steam installation not found - stpluginPath is null or empty");
-                            throw new Exception("Steam installation not found");
-                        }
-
-                        _logger.Info($"stplug-in path: {stpluginPath}");
-
-                        _steamService.EnsureStPluginDirectory();
-                        _logger.Debug("Ensured stplug-in directory exists");
-
-                        foreach (var luaFile in luaFiles)
-                        {
-                            var fileName = Path.GetFileName(luaFile);
-                            var destPath = Path.Combine(stpluginPath, fileName);
-
-                            progressCallback?.Invoke($"Installing {fileName}...");
-                            _logger.Info($"Installing {fileName} to: {destPath}");
-
-                            // Remove existing file
-                            if (File.Exists(destPath))
-                            {
-                                _logger.Debug($"Removing existing file: {destPath}");
-                                File.Delete(destPath);
-                            }
-
-                            // Remove .disabled version
-                            var disabledPath = destPath + ".disabled";
-                            if (File.Exists(disabledPath))
-                            {
-                                _logger.Debug($"Removing disabled file: {disabledPath}");
-                                File.Delete(disabledPath);
-                            }
-
-                            // Copy file
-                            _logger.Debug($"Copying {luaFile} to {destPath}");
-                            File.Copy(luaFile, destPath, true);
-                            _logger.Info($"Successfully installed: {fileName}");
-                        }
+                        _logger.Error("Steam installation not found - stpluginPath is null or empty");
+                        throw new Exception("Steam installation not found");
                     }
 
-                    // Install .manifest files to depotcache
+                    _logger.Info($"stplug-in path: {stpluginPath}");
+                    _steamService.EnsureStPluginDirectory();
+
+                    foreach (var luaFile in luaFiles)
+                    {
+                        var fileName = Path.GetFileName(luaFile);
+                        var destPath = Path.Combine(stpluginPath, fileName);
+
+                        progressCallback?.Invoke($"Installing {fileName}...");
+                        _logger.Info($"Installing {fileName} to: {destPath}");
+
+                        if (File.Exists(destPath))
+                        {
+                            File.Delete(destPath);
+                        }
+
+                        var disabledPath = destPath + ".disabled";
+                        if (File.Exists(disabledPath))
+                        {
+                            File.Delete(disabledPath);
+                        }
+
+                        File.Copy(luaFile, destPath, true);
+                        _logger.Info($"Successfully installed: {fileName}");
+                    }
+
                     var steamPath = _steamService.GetSteamPath();
                     if (!string.IsNullOrEmpty(steamPath) && manifestFiles.Length > 0)
                     {
@@ -152,29 +86,15 @@ namespace SolusManifestApp.Services
                         foreach (var manifestFile in manifestFiles)
                         {
                             var fileName = Path.GetFileName(manifestFile);
-
-                            // If selectedDepotIds provided, only extract manifests for selected depots
-                            if (selectedDepotIds != null && selectedDepotIds.Count > 0)
-                            {
-                                // Check if filename contains any of the selected depot IDs
-                                var shouldExtract = selectedDepotIds.Any(depotId => fileName.Contains(depotId));
-                                if (!shouldExtract)
-                                {
-                                    continue; // Skip this manifest
-                                }
-                            }
-
                             var destPath = Path.Combine(depotCachePath, fileName);
 
                             progressCallback?.Invoke($"Installing {fileName}...");
 
-                            // Remove existing file
                             if (File.Exists(destPath))
                             {
                                 File.Delete(destPath);
                             }
 
-                            // Copy file
                             File.Copy(manifestFile, destPath, true);
                         }
                     }
@@ -185,15 +105,11 @@ namespace SolusManifestApp.Services
                 }
                 finally
                 {
-                    // Cleanup temp directory
                     try
                     {
                         Directory.Delete(tempDir, true);
                     }
-                    catch
-                    {
-                        // Ignore cleanup errors - temp directory will be cleaned up by OS eventually
-                    }
+                    catch { }
                 }
             }
             catch (Exception ex)
@@ -469,185 +385,6 @@ namespace SolusManifestApp.Services
             }
         }
 
-        public bool IsAppIdInAppList(string appId, string? customAppListPath = null)
-        {
-            try
-            {
-                string appListPath;
-
-                if (!string.IsNullOrEmpty(customAppListPath))
-                {
-                    appListPath = customAppListPath;
-                }
-                else
-                {
-                    var steamPath = _steamService.GetSteamPath();
-                    if (string.IsNullOrEmpty(steamPath))
-                    {
-                        return false;
-                    }
-                    appListPath = Path.Combine(steamPath, "AppList");
-                }
-
-                if (!Directory.Exists(appListPath))
-                {
-                    return false;
-                }
-
-                var existingFiles = Directory.GetFiles(appListPath, "*.txt");
-                foreach (var file in existingFiles)
-                {
-                    try
-                    {
-                        var content = File.ReadAllText(file).Trim();
-                        if (content == appId)
-                        {
-                            return true;
-                        }
-                    }
-                    catch
-                    {
-                        // Skip unreadable files
-                    }
-                }
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                _logger.Debug($"Error checking AppList for {appId}: {ex.Message}");
-                return false;
-            }
-        }
-
-        public bool GenerateAppList(List<string> appIds, string? customAppListPath = null)
-        {
-            try
-            {
-                string appListPath;
-
-                if (!string.IsNullOrEmpty(customAppListPath))
-                {
-                    // Use custom path for GreenLuma Stealth mode
-                    appListPath = customAppListPath;
-                }
-                else
-                {
-                    // Use default path for GreenLuma mode
-                    var steamPath = _steamService.GetSteamPath();
-                    if (string.IsNullOrEmpty(steamPath))
-                    {
-                        return false;
-                    }
-                    appListPath = Path.Combine(steamPath, "AppList");
-                }
-
-                if (!Directory.Exists(appListPath))
-                {
-                    Directory.CreateDirectory(appListPath);
-                }
-
-                // Get all existing appIds to avoid duplicates
-                var existingAppIds = new HashSet<string>();
-                var existingFiles = Directory.GetFiles(appListPath, "*.txt");
-
-                foreach (var file in existingFiles)
-                {
-                    try
-                    {
-                        var content = File.ReadAllText(file).Trim();
-                        if (!string.IsNullOrEmpty(content))
-                        {
-                            existingAppIds.Add(content);
-                        }
-                    }
-                    catch
-                    {
-                        // Skip unreadable files
-                    }
-                }
-
-                // Filter out appIds that already exist
-                var newAppIds = appIds.Where(id => !existingAppIds.Contains(id)).ToList();
-
-                if (newAppIds.Count == 0)
-                {
-                    // All appIds already exist, nothing to add
-                    return true;
-                }
-
-                // Check if we would exceed 128 files (GreenLuma limit)
-                if (existingFiles.Length + newAppIds.Count > 128)
-                {
-                    throw new Exception($"Cannot add {newAppIds.Count} apps. Would exceed 128 file limit (currently {existingFiles.Length} files).");
-                }
-
-                // Find the next available file number
-                var usedNumbers = existingFiles
-                    .Select(f => Path.GetFileNameWithoutExtension(f))
-                    .Where(n => int.TryParse(n, out _))
-                    .Select(int.Parse)
-                    .ToHashSet();
-
-                int nextNumber = 0;
-                foreach (var appId in newAppIds)
-                {
-                    // Find next unused number
-                    while (usedNumbers.Contains(nextNumber))
-                    {
-                        nextNumber++;
-                    }
-
-                    var filePath = Path.Combine(appListPath, $"{nextNumber}.txt");
-                    File.WriteAllText(filePath, appId);
-                    usedNumbers.Add(nextNumber);
-                    nextNumber++;
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.Error($"Failed to generate AppList: {ex.Message}");
-                return false;
-            }
-        }
-
-        public bool RemoveAppListEntry(string appId)
-        {
-            try
-            {
-                var steamPath = _steamService.GetSteamPath();
-                if (string.IsNullOrEmpty(steamPath))
-                {
-                    return false;
-                }
-
-                var appListPath = Path.Combine(steamPath, "AppList");
-                if (!Directory.Exists(appListPath))
-                {
-                    return false;
-                }
-
-                // Find and delete files containing this appId
-                foreach (var file in Directory.GetFiles(appListPath, "*.txt"))
-                {
-                    var content = File.ReadAllText(file).Trim();
-                    if (content == appId)
-                    {
-                        File.Delete(file);
-                    }
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.Error($"Failed to remove AppList entry for {appId}: {ex.Message}");
-                return false;
-            }
-        }
-
         public bool MoveManifestToDepotCache(string manifestPath)
         {
             try
@@ -848,556 +585,5 @@ namespace SolusManifestApp.Services
             return -1;
         }
 
-        public Dictionary<string, string> ExtractDepotKeysFromLua(string luaFilePath)
-        {
-            var depotKeys = new Dictionary<string, string>();
-
-            try
-            {
-                _logger.Debug($"Extracting depot keys from: {luaFilePath}");
-
-                if (!File.Exists(luaFilePath))
-                {
-                    _logger.Error("Lua file does not exist");
-                    return depotKeys;
-                }
-
-                var lines = File.ReadAllLines(luaFilePath);
-                _logger.Debug($"Reading {lines.Length} lines from lua file");
-
-                foreach (var line in lines)
-                {
-                    // Look for lines like: addappid(285311, 1, "1e5f4762efe80ce881ab1267f4aef3bd6dcb98bac938ff35d4eb0ce470d597f7")
-                    if (line.Contains("addappid") && line.Contains("\""))
-                    {
-                        // Extract depot ID and key using regex or string parsing
-                        var trimmed = line.Trim();
-
-                        // Find the opening parenthesis
-                        var openParenIndex = trimmed.IndexOf('(');
-                        if (openParenIndex < 0) continue;
-
-                        // Find the closing parenthesis
-                        var closeParenIndex = trimmed.IndexOf(')');
-                        if (closeParenIndex < 0) continue;
-
-                        // Extract the parameters
-                        var paramsStr = trimmed.Substring(openParenIndex + 1, closeParenIndex - openParenIndex - 1);
-                        var parts = paramsStr.Split(',');
-
-                        if (parts.Length >= 3)
-                        {
-                            // First param is depot ID
-                            var depotId = parts[0].Trim();
-
-                            // Third param is the key (in quotes)
-                            var keyPart = parts[2].Trim();
-                            var key = keyPart.Trim('"', ' ');
-
-                            if (!string.IsNullOrEmpty(depotId) && !string.IsNullOrEmpty(key) && key.Length > 10)
-                            {
-                                depotKeys[depotId] = key;
-                                _logger.Debug($"Extracted depot key: {depotId}");
-                            }
-                        }
-                    }
-                }
-
-                _logger.Info($"Extracted {depotKeys.Count} total depot keys from lua file");
-            }
-            catch (Exception ex)
-            {
-                _logger.Error($"Error extracting depot keys: {ex.Message}");
-                // Return empty dictionary on error
-            }
-
-            return depotKeys;
-        }
-
-        /// <summary>
-        /// Scans AppList folder and ACF files to find GreenLuma installed games
-        /// </summary>
-        public List<GreenLumaGame> GetGreenLumaGames(string? customAppListPath = null)
-        {
-            var greenLumaGames = new List<GreenLumaGame>();
-
-            try
-            {
-                var steamPath = _steamService.GetSteamPath();
-                if (string.IsNullOrEmpty(steamPath))
-                {
-                    return greenLumaGames;
-                }
-
-                // Determine AppList path
-                string appListPath;
-                if (!string.IsNullOrEmpty(customAppListPath))
-                {
-                    appListPath = customAppListPath;
-                }
-                else
-                {
-                    appListPath = Path.Combine(steamPath, "AppList");
-                }
-
-                if (!Directory.Exists(appListPath))
-                {
-                    return greenLumaGames;
-                }
-
-                // Read all AppList entries
-                var appListEntries = new Dictionary<string, List<string>>(); // AppID -> List of file paths
-                var appListFiles = Directory.GetFiles(appListPath, "*.txt");
-
-                foreach (var file in appListFiles)
-                {
-                    try
-                    {
-                        var appId = File.ReadAllText(file).Trim();
-                        if (!string.IsNullOrEmpty(appId))
-                        {
-                            if (!appListEntries.ContainsKey(appId))
-                            {
-                                appListEntries[appId] = new List<string>();
-                            }
-                            appListEntries[appId].Add(file);
-                        }
-                    }
-                    catch { }
-                }
-
-                // Scan ACF files to find games
-                var steamAppsPath = Path.Combine(steamPath, "steamapps");
-                if (!Directory.Exists(steamAppsPath))
-                {
-                    return greenLumaGames;
-                }
-
-                var acfFiles = Directory.GetFiles(steamAppsPath, "appmanifest_*.acf");
-
-                foreach (var acfFile in acfFiles)
-                {
-                    try
-                    {
-                        var acfContent = File.ReadAllText(acfFile);
-
-                        // Parse AppID from ACF
-                        var appIdMatch = System.Text.RegularExpressions.Regex.Match(acfContent, @"""appid""\s+""(\d+)""");
-                        if (!appIdMatch.Success)
-                        {
-                            continue;
-                        }
-
-                        var appId = appIdMatch.Groups[1].Value;
-
-                        // Check if this game has AppList entries
-                        if (!appListEntries.ContainsKey(appId))
-                        {
-                            continue; // Not a GreenLuma game
-                        }
-
-                        // Parse game name
-                        var nameMatch = System.Text.RegularExpressions.Regex.Match(acfContent, @"""name""\s+""([^""]+)""");
-                        var gameName = nameMatch.Success ? nameMatch.Groups[1].Value : $"App {appId}";
-
-                        // Parse install date
-                        DateTime? installDate = null;
-                        var installDateMatch = System.Text.RegularExpressions.Regex.Match(acfContent, @"""LastUpdated""\s+""(\d+)""");
-                        if (installDateMatch.Success && long.TryParse(installDateMatch.Groups[1].Value, out long timestamp))
-                        {
-                            installDate = DateTimeOffset.FromUnixTimeSeconds(timestamp).DateTime;
-                        }
-
-                        // Parse size
-                        long sizeBytes = 0;
-                        var sizeMatch = System.Text.RegularExpressions.Regex.Match(acfContent, @"""SizeOnDisk""\s+""(\d+)""");
-                        if (sizeMatch.Success && long.TryParse(sizeMatch.Groups[1].Value, out long size))
-                        {
-                            sizeBytes = size;
-                        }
-
-                        // Parse depot IDs from ACF
-                        var depotIds = new List<string>();
-                        var allAppListFiles = new List<string>();
-
-                        // Add the main app ID
-                        depotIds.Add(appId);
-                        if (appListEntries.ContainsKey(appId))
-                        {
-                            allAppListFiles.AddRange(appListEntries[appId]);
-                        }
-
-                        // Find all depot IDs in the "InstalledDepots" section
-                        var installedDepotsMatch = System.Text.RegularExpressions.Regex.Match(
-                            acfContent,
-                            @"""InstalledDepots""[^{]*\{([^}]+)\}",
-                            System.Text.RegularExpressions.RegexOptions.Singleline
-                        );
-
-                        if (installedDepotsMatch.Success)
-                        {
-                            var depotsSection = installedDepotsMatch.Groups[1].Value;
-                            var depotMatches = System.Text.RegularExpressions.Regex.Matches(depotsSection, @"""(\d+)""");
-
-                            foreach (System.Text.RegularExpressions.Match match in depotMatches)
-                            {
-                                var depotId = match.Groups[1].Value;
-                                if (!depotIds.Contains(depotId))
-                                {
-                                    depotIds.Add(depotId);
-                                    if (appListEntries.ContainsKey(depotId))
-                                    {
-                                        allAppListFiles.AddRange(appListEntries[depotId]);
-                                    }
-                                }
-                            }
-                        }
-
-                        // Also check for DLC app IDs in the ACF
-                        var dlcMatches = System.Text.RegularExpressions.Regex.Matches(acfContent, @"""(\d{4,})""");
-                        foreach (System.Text.RegularExpressions.Match match in dlcMatches)
-                        {
-                            var dlcId = match.Groups[1].Value;
-                            // Add any app ID found in AppList that's also in the ACF
-                            if (appListEntries.ContainsKey(dlcId) && !depotIds.Contains(dlcId))
-                            {
-                                depotIds.Add(dlcId);
-                                allAppListFiles.AddRange(appListEntries[dlcId]);
-                            }
-                        }
-
-                        // Check if game has a corresponding .lua file
-                        var stpluginPath = _steamService.GetStPluginPath();
-                        bool hasLuaFile = false;
-                        string? luaFilePath = null;
-
-                        if (!string.IsNullOrEmpty(stpluginPath))
-                        {
-                            var luaFile = Path.Combine(stpluginPath, $"{appId}.lua");
-                            var luaFileDisabled = Path.Combine(stpluginPath, $"{appId}.lua.disabled");
-
-                            if (File.Exists(luaFile))
-                            {
-                                hasLuaFile = true;
-                                luaFilePath = luaFile;
-                            }
-                            else if (File.Exists(luaFileDisabled))
-                            {
-                                hasLuaFile = true;
-                                luaFilePath = luaFileDisabled;
-                            }
-                        }
-
-                        var greenLumaGame = new GreenLumaGame
-                        {
-                            AppId = appId,
-                            Name = gameName,
-                            SizeBytes = sizeBytes,
-                            InstallDate = installDate,
-                            LastUpdated = installDate,
-                            AppListFilePaths = allAppListFiles,
-                            DepotIds = depotIds,
-                            AcfPath = acfFile,
-                            HasLuaFile = hasLuaFile,
-                            LuaFilePath = luaFilePath
-                        };
-
-                        greenLumaGames.Add(greenLumaGame);
-                    }
-                    catch
-                    {
-                        // Skip problematic ACF files
-                    }
-                }
-            }
-            catch
-            {
-                // Return empty list on error
-            }
-
-            return greenLumaGames;
-        }
-
-        /// <summary>
-        /// Uninstalls a GreenLuma game by querying SteamCMD API for complete depot list and removing all related files
-        /// </summary>
-        public async Task<bool> UninstallGreenLumaGameAsync(string appId, string? customAppListPath = null)
-        {
-            try
-            {
-                var steamPath = _steamService.GetSteamPath();
-                if (string.IsNullOrEmpty(steamPath))
-                {
-                    return false;
-                }
-
-                // Get all depot IDs from SteamCMD API for complete cleanup
-                var depotIds = await GetAllDepotIdsFromApiAsync(appId);
-
-                // Fallback: if API fails, get depot IDs from local ACF file
-                if (depotIds.Count == 0)
-                {
-                    var greenLumaGames = GetGreenLumaGames(customAppListPath);
-                    var game = greenLumaGames.FirstOrDefault(g => g.AppId == appId);
-                    if (game != null)
-                    {
-                        depotIds = game.DepotIds;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-
-                // 1. Remove all AppList .txt files for main appId AND all depot IDs
-                string appListPath = !string.IsNullOrEmpty(customAppListPath)
-                    ? customAppListPath
-                    : Path.Combine(steamPath, "AppList");
-
-                if (Directory.Exists(appListPath))
-                {
-                    var allAppListFiles = Directory.GetFiles(appListPath, "*.txt");
-                    int removedCount = 0;
-                    foreach (var file in allAppListFiles)
-                    {
-                        try
-                        {
-                            var fileContent = File.ReadAllText(file).Trim();
-                            // Remove if it matches the appId OR any depot ID
-                            if (fileContent == appId || depotIds.Contains(fileContent))
-                            {
-                                File.Delete(file);
-                                _logger.Debug($"Deleted AppList file: {Path.GetFileName(file)}");
-                                removedCount++;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.Error($"Failed to delete AppList file {Path.GetFileName(file)}: {ex.Message}");
-                        }
-                    }
-                    _logger.Info($"Removed {removedCount} AppList files for app {appId}");
-                }
-
-                // 2. Call steam://uninstall/{appId} to let Steam handle the uninstall
-                try
-                {
-                    var uninstallUri = $"steam://uninstall/{appId}";
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                    {
-                        FileName = uninstallUri,
-                        UseShellExecute = true
-                    });
-                    _logger.Debug($"Triggered Steam uninstall for app {appId}");
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error($"Failed to trigger Steam uninstall: {ex.Message}");
-                }
-
-                // 3. Remove depot manifest files ({depotId}_manifestgid.manifest) from depotcache
-                var depotCachePath = Path.Combine(steamPath, "depotcache");
-
-                if (Directory.Exists(depotCachePath))
-                {
-                    foreach (var depotId in depotIds)
-                    {
-                        try
-                        {
-                            var manifestFiles = Directory.GetFiles(depotCachePath, $"{depotId}_*.manifest");
-                            foreach (var manifestFile in manifestFiles)
-                            {
-                                File.Delete(manifestFile);
-                                _logger.Debug($"Deleted manifest file: {Path.GetFileName(manifestFile)}");
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.Error($"Failed to delete manifests for depot {depotId}: {ex.Message}");
-                        }
-                    }
-                }
-
-                // 4. Remove depot keys from Config.VDF
-                try
-                {
-                    var configPath = Path.Combine(steamPath, "config", "config.vdf");
-                    if (File.Exists(configPath))
-                    {
-                        var content = File.ReadAllText(configPath);
-
-                        foreach (var depotId in depotIds)
-                        {
-                            var pattern = $@"""{depotId}""\s*\{{\s*""DecryptionKey""\s+""[^""]*""\s*\}}";
-                            content = System.Text.RegularExpressions.Regex.Replace(content, pattern, "", System.Text.RegularExpressions.RegexOptions.Multiline);
-                        }
-
-                        File.WriteAllText(configPath, content);
-                    }
-                }
-                catch { }
-
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Gets all depot IDs for an app from SteamCMD API
-        /// </summary>
-        private async Task<List<string>> GetAllDepotIdsFromApiAsync(string appId)
-        {
-            var depotIds = new List<string>();
-
-            try
-            {
-                using var httpClient = new System.Net.Http.HttpClient();
-                httpClient.Timeout = TimeSpan.FromSeconds(10);
-
-                var response = await httpClient.GetAsync($"https://api.steamcmd.net/v1/info/{appId}");
-                if (!response.IsSuccessStatusCode)
-                {
-                    return depotIds;
-                }
-
-                var json = await response.Content.ReadAsStringAsync();
-                var jsonDoc = System.Text.Json.JsonDocument.Parse(json);
-
-                // Navigate to data -> {appId} -> depots
-                if (jsonDoc.RootElement.TryGetProperty("data", out var data) &&
-                    data.TryGetProperty(appId, out var appData) &&
-                    appData.TryGetProperty("depots", out var depots))
-                {
-                    foreach (var depot in depots.EnumerateObject())
-                    {
-                        // Only include numeric depot IDs (exclude "branches" and other non-depot keys)
-                        if (uint.TryParse(depot.Name, out _))
-                        {
-                            depotIds.Add(depot.Name);
-                        }
-                    }
-                }
-            }
-            catch
-            {
-                // Return empty list on error - will fallback to local data
-            }
-
-            return depotIds;
-        }
-
-        public int ApplyTokensFromLuaFile(string luaFilePath)
-        {
-            try
-            {
-                if (!File.Exists(luaFilePath))
-                {
-                    _logger.Error($"Lua file not found: {luaFilePath}");
-                    return 0;
-                }
-
-                var luaContent = File.ReadAllText(luaFilePath);
-                var parser = new LuaParser();
-                var tokens = parser.ParseTokens(luaContent);
-
-                if (tokens.Count == 0)
-                {
-                    _logger.Debug("No tokens found in Lua file");
-                    return 0;
-                }
-
-                _logger.Debug($"Found {tokens.Count} tokens in Lua file");
-
-                if (!_appInfoService.ReadAppInfo())
-                {
-                    _logger.Error("Failed to read appinfo.vdf");
-                    return 0;
-                }
-
-                int appliedCount = 0;
-                foreach (var (appId, token) in tokens)
-                {
-                    if (uint.TryParse(appId, out uint id))
-                    {
-                        if (_appInfoService.SetOrCreateToken(id, token))
-                        {
-                            appliedCount++;
-                            _logger.Debug($"Applied token for app {appId}");
-                        }
-                        else
-                        {
-                            _logger.Debug($"App {appId} not found in appinfo.vdf, token not applied");
-                        }
-                    }
-                }
-
-                if (appliedCount > 0)
-                {
-                    if (_appInfoService.WriteAppInfo())
-                    {
-                        _logger.Info($"Successfully wrote {appliedCount} tokens to appinfo.vdf");
-                    }
-                    else
-                    {
-                        _logger.Error("Failed to write appinfo.vdf");
-                        return 0;
-                    }
-                }
-
-                return appliedCount;
-            }
-            catch (Exception ex)
-            {
-                _logger.Error($"Error applying tokens from Lua file: {ex.Message}");
-                return 0;
-            }
-        }
-
-        public int ApplyTokensFromLuaContent(string luaContent)
-        {
-            try
-            {
-                var parser = new LuaParser();
-                var tokens = parser.ParseTokens(luaContent);
-
-                if (tokens.Count == 0)
-                {
-                    return 0;
-                }
-
-                if (!_appInfoService.ReadAppInfo())
-                {
-                    _logger.Error("Failed to read appinfo.vdf");
-                    return 0;
-                }
-
-                int appliedCount = 0;
-                foreach (var (appId, token) in tokens)
-                {
-                    if (uint.TryParse(appId, out uint id))
-                    {
-                        if (_appInfoService.SetOrCreateToken(id, token))
-                        {
-                            appliedCount++;
-                        }
-                    }
-                }
-
-                if (appliedCount > 0)
-                {
-                    _appInfoService.WriteAppInfo();
-                }
-
-                return appliedCount;
-            }
-            catch (Exception ex)
-            {
-                _logger.Error($"Error applying tokens: {ex.Message}");
-                return 0;
-            }
-        }
     }
 }

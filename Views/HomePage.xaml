@@ -43,15 +43,13 @@
                                    HorizontalAlignment="Center"
                                    Margin="0,0,0,30"/>
 
-                        <!-- Launch Steam Button (SteamTools or GreenLuma Stealth) -->
+                        <!-- Launch Steam Button -->
                         <Button Content="🚀 Launch Steam"
                                 Command="{Binding LaunchSteamCommand}"
-                                Visibility="{Binding ShowLaunchSteam, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 HorizontalAlignment="Center"
                                 Padding="30,12"
                                 FontSize="14"
-                                FontWeight="SemiBold"
-                                Margin="0,0,0,15">
+                                FontWeight="SemiBold">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
                                     <Setter Property="Background" Value="#1b2838"/>
@@ -61,29 +59,6 @@
                                     <Style.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
                                             <Setter Property="Background" Value="#2a475e"/>
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-
-                        <!-- Launch GreenLuma Button (GreenLuma regular) -->
-                        <Button Content="🚀 Launch GreenLuma"
-                                Command="{Binding LaunchGreenLumaCommand}"
-                                Visibility="{Binding ShowLaunchGreenLuma, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                HorizontalAlignment="Center"
-                                Padding="30,12"
-                                FontSize="14"
-                                FontWeight="SemiBold">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                    <Setter Property="Background" Value="#4CAF50"/>
-                                    <Setter Property="Foreground" Value="White"/>
-                                    <Setter Property="BorderThickness" Value="0"/>
-                                    <Setter Property="Cursor" Value="Hand"/>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#45a049"/>
                                         </Trigger>
                                     </Style.Triggers>
                                 </Style>

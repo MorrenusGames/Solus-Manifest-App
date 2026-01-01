@@ -110,12 +110,6 @@
                         </Style>
                     </TabControl.Resources>
 
-                    <!-- SteamAuth Pro - Site taken down, temporarily disabled
-                    <TabItem Header="SteamAuth Pro">
-                        <steamAuth:SteamAuthProControl HorizontalAlignment="Stretch"/>
-                    </TabItem>
-                    -->
-
                     <TabItem Header="GBE Token Generator">
                         <views:GBEDenuvoControl HorizontalAlignment="Stretch"/>
                     </TabItem>
@@ -141,25 +135,6 @@
                                            Margin="0,0,0,15"/>
                                 <Button Content="🔗 Download SteamTools"
                                         Command="{Binding OpenSteamToolsCommand}"
-                                        HorizontalAlignment="Left"
-                                        Padding="20,10"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- GreenLuma Section -->
-                        <Border Style="{StaticResource ModernCardStyle}" Margin="0,0,0,20">
-                            <StackPanel>
-                                <TextBlock Text="GreenLuma"
-                                           FontSize="20"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                           Margin="0,0,0,10"/>
-                                <TextBlock Text="Download GreenLuma for advanced depot control and game downgrading"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           TextWrapping="Wrap"
-                                           Margin="0,0,0,15"/>
-                                <Button Content="🔗 Download GreenLuma"
-                                        Command="{Binding OpenGreenLumaCommand}"
                                         HorizontalAlignment="Left"
                                         Padding="20,10"/>
                             </StackPanel>

@@ -70,14 +70,12 @@ namespace SolusManifestApp
 
                     services.AddSingleton<BackupService>();
                     services.AddSingleton<DepotDownloadService>();
-                    services.AddSingleton<SteamLibraryService>();
                     services.AddSingleton<ThemeService>();
                     services.AddSingleton<ProtocolHandlerService>();
                     services.AddSingleton<LibraryDatabaseService>();
                     services.AddSingleton<LibraryRefreshService>();
                     services.AddSingleton<RecentGamesService>();
                     services.AddSingleton<ConfigKeysUploadService>();
-                    services.AddSingleton<ProfileService>();
                     services.AddSingleton<ManifestStorageService>();
 
                     // ViewModels

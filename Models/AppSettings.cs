@@ -6,15 +6,7 @@ namespace SolusManifestApp.Models
     public enum ToolMode
     {
         SteamTools,
-        GreenLuma,
         DepotDownloader
-    }
-
-    public enum GreenLumaMode
-    {
-        Normal,
-        StealthAnyFolder,
-        StealthUser32
     }
 
     public enum AppTheme
@@ -76,13 +68,6 @@ namespace SolusManifestApp.Models
         // Auto-Update
         public bool AutoCheckUpdates { get; set; } = true; // Legacy - kept for compatibility
         public AutoUpdateMode AutoUpdate { get; set; } = AutoUpdateMode.CheckOnly;
-
-        // GreenLuma Configuration
-        public GreenLumaMode GreenLumaSubMode { get; set; } = GreenLumaMode.Normal;
-        public string AppListPath { get; set; } = string.Empty;
-        public string DLLInjectorPath { get; set; } = string.Empty;
-        public bool UseDefaultInstallLocation { get; set; } = true;
-        public string SelectedLibraryFolder { get; set; } = string.Empty;
 
         // Config VDF Extractor
         public string ConfigVdfPath { get; set; } = string.Empty;

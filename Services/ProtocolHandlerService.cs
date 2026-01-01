@@ -167,18 +167,7 @@ namespace SolusManifestApp.Services
             {
                 var settings = _settingsService.LoadSettings();
 
-                // Basic installation without UI dialogs
-                var depotKeys = await _fileInstallService.InstallFromZipAsync(
-                    zipPath,
-                    settings.Mode == ToolMode.GreenLuma,
-                    null, // No status callback
-                    null); // No selected depot IDs
-
-                // If GreenLuma mode, update Config.VDF with depot keys
-                if (settings.Mode == ToolMode.GreenLuma && depotKeys.Count > 0)
-                {
-                    _fileInstallService.UpdateConfigVdfWithDepotKeys(depotKeys);
-                }
+                await _fileInstallService.InstallFromZipAsync(zipPath, null);
 
                 _notificationService.ShowSuccess($"Installation completed for App ID: {appId}. Restart Steam to see changes.");
 
