@@ -7,6 +7,7 @@ using System.Net.Http.Headers;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using SteamKit2;
 
 namespace DepotDownloader
 {
@@ -14,7 +15,7 @@ namespace DepotDownloader
     // We don't know if the IPv6 stack is functional.
     class HttpClientFactory
     {
-        public static HttpClient CreateHttpClient()
+        public static HttpClient CreateHttpClient(HttpClientPurpose purpose)
         {
             var client = new HttpClient(new SocketsHttpHandler
             {

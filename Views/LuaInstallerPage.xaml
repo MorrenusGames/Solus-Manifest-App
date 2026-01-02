@@ -160,28 +160,6 @@
                 </Grid>
             </Border>
 
-            <!-- Profile Selector (GreenLuma mode only) -->
-            <Border Grid.Row="1"
-                    Background="{DynamicResource SecondaryDarkBrush}"
-                    CornerRadius="8"
-                    Padding="15"
-                    Margin="0,20,0,0"
-                    Visibility="{Binding IsGreenLumaMode, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Install to Profile:"
-                               FontSize="14"
-                               Foreground="{DynamicResource TextSecondaryBrush}"
-                               VerticalAlignment="Center"
-                               Margin="0,0,10,0"/>
-                    <ComboBox ItemsSource="{Binding Profiles}"
-                              SelectedItem="{Binding SelectedProfile}"
-                              DisplayMemberPath="Name"
-                              Style="{StaticResource ModernComboBoxStyle}"
-                              MinWidth="200"
-                              FontSize="14"/>
-                </StackPanel>
-            </Border>
-
             <!-- Help Text -->
             <Border Grid.Row="2"
                     Background="{DynamicResource SecondaryDarkBrush}"
@@ -195,27 +173,12 @@
                                Foreground="{DynamicResource TextPrimaryBrush}"
                                Margin="0,0,0,10"/>
 
-                    <!-- SteamTools Mode Instructions -->
                     <TextBlock FontSize="12"
                                Foreground="{DynamicResource TextSecondaryBrush}"
-                               TextWrapping="Wrap"
-                               Visibility="{Binding IsGreenLumaMode, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                               TextWrapping="Wrap">
                         <Run Text="• .lua files will be copied to your Steam stplug-in folder"/><LineBreak/>
                         <Run Text="• .manifest files will be copied to your Steam depotcache folder"/><LineBreak/>
                         <Run Text="• .zip archives will be extracted automatically"/><LineBreak/>
-                        <Run Text="• Remember to restart Steam after installation for changes to take effect"/>
-                    </TextBlock>
-
-                    <!-- GreenLuma Mode Instructions -->
-                    <TextBlock FontSize="12"
-                               Foreground="{DynamicResource TextSecondaryBrush}"
-                               TextWrapping="Wrap"
-                               Visibility="{Binding IsGreenLumaMode, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Run Text="• .lua files are used temporarily to extract depot keys (not installed)"/><LineBreak/>
-                        <Run Text="• .manifest files (selected depots only) will be copied to depotcache"/><LineBreak/>
-                        <Run Text="• AppList entries will be generated for the game and depots"/><LineBreak/>
-                        <Run Text="• ACF file will be created in steamapps folder"/><LineBreak/>
-                        <Run Text="• Depot keys will be added to Steam config.vdf"/><LineBreak/>
                         <Run Text="• Remember to restart Steam after installation for changes to take effect"/>
                     </TextBlock>
                 </StackPanel>

@@ -462,7 +462,7 @@ namespace DepotDownloader
             Directory.CreateDirectory(Path.GetDirectoryName(fileStagingPath));
 
             using (var file = File.OpenWrite(fileStagingPath))
-            using (var client = HttpClientFactory.CreateHttpClient())
+            using (var client = HttpClientFactory.CreateHttpClient(SteamKit2.HttpClientPurpose.CDN))
             {
                 Console.WriteLine("Downloading {0}", fileName);
                 var responseStream = await client.GetStreamAsync(url);

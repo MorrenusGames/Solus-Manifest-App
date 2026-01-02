@@ -1,20 +1,29 @@
+using System;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using SteamKit2;
 
 namespace SolusManifestApp.Tools.DepotDumper
 {
     class HttpClientFactory
     {
-        public static HttpClient CreateHttpClient()
+        public static HttpClient CreateHttpClient(HttpClientPurpose purpose)
         {
-            var client = new HttpClient(new SocketsHttpHandler
+            var handler = new SocketsHttpHandler
             {
-                ConnectCallback = IPv4ConnectAsync
-            });
+                ConnectCallback = IPv4ConnectAsync,
+                PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+                PooledConnectionLifetime = Timeout.InfiniteTimeSpan
+            };
+
+            var client = new HttpClient(handler)
+            {
+                Timeout = Timeout.InfiniteTimeSpan
+            };
 
             var assemblyVersion = typeof(HttpClientFactory).Assembly.GetName().Version.ToString(fieldCount: 3);
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("DepotDumper", assemblyVersion));
@@ -28,6 +37,11 @@ namespace SolusManifestApp.Tools.DepotDumper
             {
                 NoDelay = true
             };
+
+            socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+            socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, 30);
+            socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, 10);
+            socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveRetryCount, 5);
 
             try
             {

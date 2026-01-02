@@ -23,6 +23,8 @@ namespace SolusManifestApp.Tools.DepotDumper
         private bool isDumping = false;
         private List<string> generatedFiles = new List<string>();
         private readonly SettingsService _settingsService;
+        private StreamWriter? _logFile;
+        private readonly string _logFilePath;
 
         public bool ShowLoginView { get; set; } = true;
 
@@ -31,6 +33,8 @@ namespace SolusManifestApp.Tools.DepotDumper
             InitializeComponent();
             DataContext = this;
             _settingsService = new SettingsService();
+            string outputDir = Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory;
+            _logFilePath = Path.Combine(outputDir, "depot_dumper.log");
         }
 
         #region Login Events
@@ -258,6 +262,17 @@ namespace SolusManifestApp.Tools.DepotDumper
             ProgressView.Visibility = Visibility.Visible;
             isDumping = true;
 
+            try
+            {
+                _logFile = new StreamWriter(_logFilePath, append: false) { AutoFlush = true };
+                AppendLog($"=== Depot Dumper Started at {DateTime.Now:yyyy-MM-dd HH:mm:ss} ===");
+                AppendLog($"Log file: {_logFilePath}");
+            }
+            catch (Exception ex)
+            {
+                AppendLog($"Warning: Could not create log file: {ex.Message}");
+            }
+
             bool dumpUnreleased = DumpUnreleasedCheckBox.IsChecked ?? false;
             var targetAppIds = new List<uint>();
             if (!string.IsNullOrWhiteSpace(AppIdTextBox.Text))
@@ -299,7 +314,13 @@ namespace SolusManifestApp.Tools.DepotDumper
             }
             catch (Exception ex)
             {
-                AppendLog($"Error: {ex.Message}");
+                AppendLog($"EXCEPTION: {ex.GetType().Name}: {ex.Message}");
+                AppendLog($"Stack trace:\n{ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    AppendLog($"Inner exception: {ex.InnerException.GetType().Name}: {ex.InnerException.Message}");
+                    AppendLog($"Inner stack trace:\n{ex.InnerException.StackTrace}");
+                }
                 await Dispatcher.InvokeAsync(() =>
                 {
                     MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -307,6 +328,15 @@ namespace SolusManifestApp.Tools.DepotDumper
             }
             finally
             {
+                AppendLog($"=== Depot Dumper Finished at {DateTime.Now:yyyy-MM-dd HH:mm:ss} ===");
+                try
+                {
+                    _logFile?.Close();
+                    _logFile?.Dispose();
+                    _logFile = null;
+                }
+                catch { }
+
                 steam3?.Disconnect();
                 await Dispatcher.InvokeAsync(() =>
                 {
@@ -314,12 +344,10 @@ namespace SolusManifestApp.Tools.DepotDumper
 
                     if (wasCancelled)
                     {
-                        // Show back button when cancelled
                         BackButton.Visibility = Visibility.Visible;
                     }
                     else
                     {
-                        // Show upload button if files were generated
                         if (generatedFiles.Count > 0)
                         {
                             UploadButton.Visibility = Visibility.Visible;
@@ -369,6 +397,8 @@ namespace SolusManifestApp.Tools.DepotDumper
                         AppendLog("Unable to get Steam credentials.");
                         return;
                     }
+
+                    _ = Task.Run(() => steam3.TickCallbacks());
 
                     Dispatcher.InvokeAsync(() =>
                     {
@@ -718,7 +748,7 @@ namespace SolusManifestApp.Tools.DepotDumper
 
         private void UpdateProgress(int current, int total)
         {
-            Dispatcher.Invoke(() =>
+            Dispatcher.InvokeAsync(() =>
             {
                 ProgressBar.Value = (double)current / total * 100;
                 ProgressText.Text = $"{current} / {total}";
@@ -727,6 +757,14 @@ namespace SolusManifestApp.Tools.DepotDumper
 
         private void AppendLog(string message)
         {
+            var logLine = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}";
+            try
+            {
+                _logFile?.WriteLine(logLine);
+                _logFile?.Flush();
+            }
+            catch { }
+
             Dispatcher.InvokeAsync(() =>
             {
                 LogTextBlock.Text += $"[{DateTime.Now:HH:mm:ss}] {message}\n";
