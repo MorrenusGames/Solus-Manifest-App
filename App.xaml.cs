@@ -77,6 +77,7 @@ namespace SolusManifestApp
                     services.AddSingleton<RecentGamesService>();
                     services.AddSingleton<ConfigKeysUploadService>();
                     services.AddSingleton<ManifestStorageService>();
+                    services.AddSingleton<AppListCacheService>();
 
                     // ViewModels
                     services.AddSingleton<MainViewModel>();
@@ -196,6 +197,10 @@ namespace SolusManifestApp
             // Start background config keys upload service
             var configKeysUploadService = _host.Services.GetRequiredService<ConfigKeysUploadService>();
             configKeysUploadService.Start();
+
+            // Initialize app list cache for autocomplete
+            var appListCacheService = _host.Services.GetRequiredService<AppListCacheService>();
+            _ = appListCacheService.InitializeAsync();
 
             base.OnStartup(e);
         }

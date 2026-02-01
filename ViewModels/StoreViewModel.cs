@@ -21,7 +21,9 @@ namespace SolusManifestApp.ViewModels
         private readonly CacheService _cacheService;
         private readonly NotificationService _notificationService;
         private readonly ManifestStorageService _manifestStorageService;
-        private readonly SemaphoreSlim _iconLoadSemaphore = new SemaphoreSlim(10, 10); // Max 10 concurrent downloads
+        private readonly AppListCacheService _appListCacheService;
+        private readonly SemaphoreSlim _iconLoadSemaphore = new SemaphoreSlim(10, 10);
+        private CancellationTokenSource? _debounceTokenSource;
 
         [ObservableProperty]
         private ObservableCollection<LibraryGame> _games = new();
@@ -31,6 +33,15 @@ namespace SolusManifestApp.ViewModels
 
         [ObservableProperty]
         private bool _searchByAppId;
+
+        [ObservableProperty]
+        private ObservableCollection<AppListEntry> _suggestions = new();
+
+        [ObservableProperty]
+        private bool _showSuggestions;
+
+        [ObservableProperty]
+        private AppListEntry? _selectedSuggestion;
 
         [ObservableProperty]
         private bool _isLoading;
@@ -81,7 +92,8 @@ namespace SolusManifestApp.ViewModels
             SettingsService settingsService,
             CacheService cacheService,
             NotificationService notificationService,
-            ManifestStorageService manifestStorageService)
+            ManifestStorageService manifestStorageService,
+            AppListCacheService appListCacheService)
         {
             _manifestApiService = manifestApiService;
             _downloadService = downloadService;
@@ -89,6 +101,7 @@ namespace SolusManifestApp.ViewModels
             _cacheService = cacheService;
             _notificationService = notificationService;
             _manifestStorageService = manifestStorageService;
+            _appListCacheService = appListCacheService;
 
             // Auto-load games on startup
             _ = InitializeAsync();
@@ -136,11 +149,61 @@ namespace SolusManifestApp.ViewModels
 
         partial void OnSearchQueryChanged(string value)
         {
-            // Auto-search when query is cleared
-            if (string.IsNullOrWhiteSpace(value) && Games.Count > 0)
+            if (string.IsNullOrWhiteSpace(value))
             {
-                _ = LoadGamesAsync();
+                ShowSuggestions = false;
+                Suggestions.Clear();
+                if (Games.Count > 0)
+                {
+                    _ = LoadGamesAsync();
+                }
+                return;
             }
+
+            _debounceTokenSource?.Cancel();
+            _debounceTokenSource = new CancellationTokenSource();
+            var token = _debounceTokenSource.Token;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(150, token);
+                    if (token.IsCancellationRequested) return;
+
+                    var results = _appListCacheService.Search(value, 8);
+
+                    await Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        Suggestions.Clear();
+                        foreach (var result in results)
+                        {
+                            Suggestions.Add(result);
+                        }
+                        ShowSuggestions = Suggestions.Count > 0;
+                    });
+                }
+                catch (TaskCanceledException)
+                {
+                }
+            }, token);
+        }
+
+        [RelayCommand]
+        private void SelectSuggestion(AppListEntry? suggestion)
+        {
+            if (suggestion == null) return;
+
+            SearchQuery = suggestion.AppId.ToString();
+            SearchByAppId = true;
+            ShowSuggestions = false;
+            _ = SearchGames();
+        }
+
+        [RelayCommand]
+        private void HideSuggestions()
+        {
+            ShowSuggestions = false;
         }
 
         [RelayCommand]
