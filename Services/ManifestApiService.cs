@@ -198,12 +198,12 @@ namespace SolusManifestApp.Services
             }
         }
 
-        public async Task<SearchResponse?> SearchLibraryAsync(string query, string apiKey, int limit = 50)
+        public async Task<SearchResponse?> SearchLibraryAsync(string query, string apiKey, int limit = 50, bool searchByAppId = false)
         {
             try
             {
                 var client = CreateClient();
-                var url = $"{BaseUrl}/search?q={Uri.EscapeDataString(query)}&api_key={apiKey}&limit={limit}";
+                var url = $"{BaseUrl}/search?q={Uri.EscapeDataString(query)}&api_key={apiKey}&limit={limit}&appid={searchByAppId.ToString().ToLower()}";
                 var response = await client.GetAsync(url);
 
                 if (!response.IsSuccessStatusCode)

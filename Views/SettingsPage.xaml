@@ -650,7 +650,17 @@
                                 <CheckBox Content="Always show tray icon (even when window is open)"
                                           IsChecked="{Binding AlwaysShowTrayIcon}"
                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                          Margin="0,0,0,15"
                                           ToolTip="Keep the system tray icon visible at all times (disabled by default)"/>
+
+                                <TextBlock Text="Default startup page"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Margin="0,0,0,5"/>
+                                <ComboBox ItemsSource="{Binding StartupPageOptions}"
+                                          SelectedItem="{Binding DefaultStartupPage}"
+                                          FontSize="14"
+                                          Padding="10,8"
+                                          ToolTip="The page to show when the app starts (can be overridden with --page argument)"/>
                             </StackPanel>
                         </Border>
 

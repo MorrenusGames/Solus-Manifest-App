@@ -57,6 +57,7 @@ namespace SolusManifestApp.Models
 
         // Display & Interface
         public AppTheme Theme { get; set; } = AppTheme.Default;
+        public string DefaultStartupPage { get; set; } = "Home";
         public double WindowWidth { get; set; } = 1200;
         public double WindowHeight { get; set; } = 800;
         public int StorePageSize { get; set; } = 20;

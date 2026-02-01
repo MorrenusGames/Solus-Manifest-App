@@ -13,6 +13,6 @@ namespace SolusManifestApp.Interfaces
         Task<bool> TestApiKeyAsync(string apiKey);
         Task<GameStatus?> GetGameStatusAsync(string appId, string apiKey);
         Task<LibraryResponse?> GetLibraryAsync(string apiKey, int limit = 100, int offset = 0, string? search = null, string sortBy = "updated");
-        Task<SearchResponse?> SearchLibraryAsync(string query, string apiKey, int limit = 50);
+        Task<SearchResponse?> SearchLibraryAsync(string query, string apiKey, int limit = 50, bool searchByAppId = false);
     }
 }

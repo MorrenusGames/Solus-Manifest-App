@@ -519,9 +519,47 @@ namespace SolusManifestApp.Tools.DepotDumper
         {
             generatedFiles.Clear();
 
-            int current = 0;
-            int total = appIds.Count;
             var depots = new List<uint>();
+            var allAppIds = new List<uint>(appIds);
+
+            UpdateStatus("Fetching app info...");
+            foreach (var appId in appIds)
+            {
+                await steam3!.RequestAppInfo(appId);
+            }
+
+            foreach (var appId in appIds)
+            {
+                SteamApps.PICSProductInfoCallback.PICSProductInfo? app;
+                if (steam3!.AppInfo.TryGetValue(appId, out app) && app != null)
+                {
+                    var dlcList = app.KeyValues["extended"]["listofdlc"];
+                    if (dlcList != KeyValue.Invalid && !string.IsNullOrEmpty(dlcList.Value))
+                    {
+                        var dlcIds = dlcList.Value.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var dlcIdStr in dlcIds)
+                        {
+                            if (uint.TryParse(dlcIdStr.Trim(), out uint dlcId) && !allAppIds.Contains(dlcId))
+                            {
+                                allAppIds.Add(dlcId);
+                                AppendLog($"Found DLC: {dlcId}");
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (allAppIds.Count > appIds.Count)
+            {
+                AppendLog($"Fetching info for {allAppIds.Count - appIds.Count} DLC apps...");
+                foreach (var dlcId in allAppIds.Skip(appIds.Count))
+                {
+                    await steam3!.RequestAppInfo(dlcId);
+                }
+            }
+
+            int current = 0;
+            int total = allAppIds.Count;
 
             string outputDir = Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory;
             string keysFile, tokensFile, namesFile;
@@ -548,18 +586,16 @@ namespace SolusManifestApp.Tools.DepotDumper
             sw_keys.AutoFlush = true;
             sw_appnames.AutoFlush = true;
 
-            foreach (var appId in appIds)
+            foreach (var appId in allAppIds)
             {
                 cancellationTokenSource?.Token.ThrowIfCancellationRequested();
 
                 current++;
                 UpdateProgress(current, total);
-                UpdateStatus($"Requesting app info for {appId} ({current}/{total})...");
-                await steam3!.RequestAppInfo(appId);
 
-                if (steam3.AppTokens.ContainsKey(appId))
+                if (steam3!.AppTokens.ContainsKey(appId))
                 {
-                    AppendLog($"Processing app {appId}...");
+                    AppendLog($"Processing app {appId} ({current}/{total})...");
                     await DumpApp(appId, licenseQuery, sw_apps, sw_keys, sw_appnames, depots);
                 }
                 else

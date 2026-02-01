@@ -23,6 +23,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <TextBox Grid.Column="0"
@@ -37,7 +38,15 @@
                 </TextBox.InputBindings>
             </TextBox>
 
-            <Button Grid.Column="1"
+            <CheckBox Grid.Column="1"
+                      Content="AppID"
+                      IsChecked="{Binding SearchByAppId}"
+                      Foreground="{DynamicResource TextPrimaryBrush}"
+                      VerticalAlignment="Center"
+                      Margin="0,0,10,0"
+                      ToolTip="Search by exact App ID only"/>
+
+            <Button Grid.Column="2"
                     Content="🔍 Search"
                     Command="{Binding SearchGamesCommand}"
                     Padding="30,10"/>

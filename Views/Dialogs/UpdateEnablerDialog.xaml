@@ -161,22 +161,42 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <!-- Select All/None -->
-                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5,5,5,10">
-                            <Button Content="Select All"
-                                    Click="SelectAll_Click"
-                                    Style="{StaticResource ModernButtonStyle}"
-                                    FontSize="12"
-                                    Height="32"
-                                    Padding="15,0"
-                                    Margin="0,0,10,0"/>
-                            <Button Content="Deselect All"
-                                    Click="DeselectAll_Click"
-                                    Style="{StaticResource SecondaryButtonStyle}"
-                                    FontSize="12"
-                                    Height="32"
-                                    Padding="15,0"/>
-                        </StackPanel>
+                        <!-- Search and Select All/None -->
+                        <Grid Grid.Row="0" Margin="5,5,5,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox x:Name="SearchBox"
+                                     Grid.Column="0"
+                                     TextChanged="SearchBox_TextChanged"
+                                     Background="{DynamicResource CardBackgroundBrush}"
+                                     Foreground="{DynamicResource TextPrimaryBrush}"
+                                     BorderBrush="{DynamicResource AccentBrush}"
+                                     BorderThickness="1"
+                                     FontSize="14"
+                                     Height="32"
+                                     Padding="8,0"
+                                     VerticalContentAlignment="Center"
+                                     Margin="0,0,10,0"/>
+
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <Button Content="Select All"
+                                        Click="SelectAll_Click"
+                                        Style="{StaticResource ModernButtonStyle}"
+                                        FontSize="12"
+                                        Height="32"
+                                        Padding="15,0"
+                                        Margin="0,0,10,0"/>
+                                <Button Content="Deselect All"
+                                        Click="DeselectAll_Click"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        FontSize="12"
+                                        Height="32"
+                                        Padding="15,0"/>
+                            </StackPanel>
+                        </Grid>
 
                         <ScrollViewer Grid.Row="1"
                                       VerticalScrollBarVisibility="Auto">

@@ -10,18 +10,36 @@ namespace SolusManifestApp.Views.Dialogs
     {
         public List<SelectableApp> Apps { get; set; }
         public List<SelectableApp> SelectedApps { get; private set; }
+        private List<SelectableApp> _allApps;
 
         public UpdateDisablerDialog(List<SelectableApp> apps)
         {
             InitializeComponent();
             Apps = apps;
+            _allApps = apps;
             AppListBox.ItemsSource = Apps;
             SelectedApps = new List<SelectableApp>();
         }
 
+        private void SearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            var query = SearchBox.Text?.Trim().ToLower() ?? "";
+            if (string.IsNullOrEmpty(query))
+            {
+                AppListBox.ItemsSource = _allApps;
+            }
+            else
+            {
+                AppListBox.ItemsSource = _allApps.Where(a =>
+                    a.Name.ToLower().Contains(query) ||
+                    a.AppId.ToLower().Contains(query)).ToList();
+            }
+        }
+
         private void SelectAll_Click(object sender, RoutedEventArgs e)
         {
-            foreach (var app in Apps)
+            var visibleApps = AppListBox.ItemsSource as IEnumerable<SelectableApp> ?? _allApps;
+            foreach (var app in visibleApps)
             {
                 app.IsSelected = true;
             }
@@ -29,7 +47,8 @@ namespace SolusManifestApp.Views.Dialogs
 
         private void DeselectAll_Click(object sender, RoutedEventArgs e)
         {
-            foreach (var app in Apps)
+            var visibleApps = AppListBox.ItemsSource as IEnumerable<SelectableApp> ?? _allApps;
+            foreach (var app in visibleApps)
             {
                 app.IsSelected = false;
             }

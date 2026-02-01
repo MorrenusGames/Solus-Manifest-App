@@ -5,6 +5,7 @@ using Microsoft.Win32;
 using SolusManifestApp.Models;
 using SolusManifestApp.Services;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -86,6 +87,11 @@ namespace SolusManifestApp.ViewModels
         private bool _rememberWindowPosition;
 
         [ObservableProperty]
+        private string _defaultStartupPage = "Home";
+
+        public List<string> StartupPageOptions { get; } = new() { "Home", "Installer", "Library", "Store", "Downloads", "Tools", "Settings" };
+
+        [ObservableProperty]
         private double? _windowLeft;
 
         [ObservableProperty]
@@ -165,6 +171,7 @@ namespace SolusManifestApp.ViewModels
         partial void OnStorePageSizeChanged(int value) => MarkAsUnsaved();
         partial void OnLibraryPageSizeChanged(int value) => MarkAsUnsaved();
         partial void OnRememberWindowPositionChanged(bool value) => MarkAsUnsaved();
+        partial void OnDefaultStartupPageChanged(string value) => MarkAsUnsaved();
         partial void OnWindowLeftChanged(double? value) => MarkAsUnsaved();
         partial void OnWindowTopChanged(double? value) => MarkAsUnsaved();
         partial void OnSelectedThemeNameChanged(string value) => MarkAsUnsaved();
@@ -269,6 +276,7 @@ namespace SolusManifestApp.ViewModels
             StorePageSize = Settings.StorePageSize;
             LibraryPageSize = Settings.LibraryPageSize;
             RememberWindowPosition = Settings.RememberWindowPosition;
+            DefaultStartupPage = Settings.DefaultStartupPage;
             WindowLeft = Settings.WindowLeft;
             WindowTop = Settings.WindowTop;
             ApiKeyHistory = new ObservableCollection<string>(Settings.ApiKeyHistory);
@@ -328,6 +336,7 @@ namespace SolusManifestApp.ViewModels
             Settings.StorePageSize = StorePageSize;
             Settings.LibraryPageSize = LibraryPageSize;
             Settings.RememberWindowPosition = RememberWindowPosition;
+            Settings.DefaultStartupPage = DefaultStartupPage;
             Settings.WindowLeft = WindowLeft;
             Settings.WindowTop = WindowTop;
 

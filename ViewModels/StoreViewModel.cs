@@ -30,6 +30,9 @@ namespace SolusManifestApp.ViewModels
         private string _searchQuery = string.Empty;
 
         [ObservableProperty]
+        private bool _searchByAppId;
+
+        [ObservableProperty]
         private bool _isLoading;
 
         [ObservableProperty]
@@ -276,7 +279,7 @@ namespace SolusManifestApp.ViewModels
 
             try
             {
-                var result = await _manifestApiService.SearchLibraryAsync(SearchQuery, settings.ApiKey, 100);
+                var result = await _manifestApiService.SearchLibraryAsync(SearchQuery, settings.ApiKey, 100, SearchByAppId);
 
                 if (result != null && result.Results.Count > 0)
                 {
@@ -292,10 +295,8 @@ namespace SolusManifestApp.ViewModels
                     CanGoNext = false;
                     StatusMessage = $"Found {result.ReturnedCount} of {result.TotalMatches} matching games";
 
-                    // Check installation status
                     UpdateInstallationStatus(result.Results);
 
-                    // Load all icons in parallel
                     _ = LoadAllGameIconsAsync(result.Results);
                 }
                 else
@@ -483,11 +484,14 @@ namespace SolusManifestApp.ViewModels
 
                 StatusMessage = $"{game.GameName} downloaded successfully";
 
-                MessageBoxHelper.Show(
-                    $"{game.GameName} has been downloaded!\n\nGo to the Downloads page to install it.",
-                    "Download Complete",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                if (!settings.AutoInstallAfterDownload)
+                {
+                    MessageBoxHelper.Show(
+                        $"{game.GameName} has been downloaded!\n\nGo to the Downloads page to install it.",
+                        "Download Complete",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
             }
             catch (System.Exception ex)
             {

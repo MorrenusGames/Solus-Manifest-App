@@ -159,10 +159,30 @@ namespace SolusManifestApp
             _trayIconService = new TrayIconService(_mainWindow, settingsService, recentGamesService, steamService, mainViewModel, themeService);
             _trayIconService.Initialize();
 
+            // Handle --page argument or use default startup page
+            string? startupPage = null;
+            for (int i = 0; i < e.Args.Length; i++)
+            {
+                if (e.Args[i].Equals("--page", StringComparison.OrdinalIgnoreCase) && i + 1 < e.Args.Length)
+                {
+                    startupPage = e.Args[i + 1];
+                    break;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(startupPage))
+            {
+                mainViewModel.NavigateTo(startupPage);
+            }
+            else if (!string.IsNullOrEmpty(settings.DefaultStartupPage) && settings.DefaultStartupPage != "Home")
+            {
+                mainViewModel.NavigateTo(settings.DefaultStartupPage);
+            }
+
             _mainWindow.Show();
 
             // Handle protocol URL if passed as argument
-            if (e.Args.Length > 0)
+            if (e.Args.Length > 0 && !e.Args[0].StartsWith("--"))
             {
                 HandleProtocolUrl(string.Join(" ", e.Args));
             }

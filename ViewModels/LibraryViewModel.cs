@@ -620,11 +620,19 @@ namespace SolusManifestApp.ViewModels
                 // Search filter
                 if (!string.IsNullOrWhiteSpace(SearchQuery))
                 {
-                    var query = SearchQuery.ToLower();
-                    filtered = filtered.Where(i =>
-                        i.Name.ToLower().Contains(query) ||
-                        i.AppId.ToLower().Contains(query) ||
-                        i.Description.ToLower().Contains(query));
+                    var query = SearchQuery.Trim();
+                    if (uint.TryParse(query, out _))
+                    {
+                        filtered = filtered.Where(i => i.AppId == query);
+                    }
+                    else
+                    {
+                        var lowerQuery = query.ToLower();
+                        filtered = filtered.Where(i =>
+                            i.Name.ToLower().Contains(lowerQuery) ||
+                            i.AppId.ToLower().Contains(lowerQuery) ||
+                            i.Description.ToLower().Contains(lowerQuery));
+                    }
                 }
 
                 // Sort
