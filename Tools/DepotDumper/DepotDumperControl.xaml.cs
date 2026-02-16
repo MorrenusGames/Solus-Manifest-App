@@ -25,6 +25,9 @@ namespace SolusManifestApp.Tools.DepotDumper
         private readonly SettingsService _settingsService;
         private StreamWriter? _logFile;
         private readonly string _logFilePath;
+        private HashSet<uint> _serverKnownDepotIds = new HashSet<uint>();
+        private int _skippedDepotCount;
+        private int _dumpedDepotCount;
 
         public bool ShowLoginView { get; set; } = true;
 
@@ -252,6 +255,42 @@ namespace SolusManifestApp.Tools.DepotDumper
             }
         }
 
+        private async Task<HashSet<uint>> FetchServerKnownDepotIdsAsync(string apiKey)
+        {
+            var knownIds = new HashSet<uint>();
+            try
+            {
+                using var httpClient = new HttpClient();
+                var response = await httpClient.GetAsync($"https://manifest.morrenus.xyz/api/v1/depot-keys?api_key={apiKey}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    AppendLog($"Warning: Server returned {response.StatusCode} when fetching known depot keys, will dump all keys");
+                    return knownIds;
+                }
+
+                var responseString = await response.Content.ReadAsStringAsync();
+                var json = JObject.Parse(responseString);
+
+                if (json["existing_depot_ids"] is JArray existing)
+                {
+                    foreach (var id in existing)
+                        knownIds.Add(id.Value<uint>());
+                }
+
+                if (json["pending_depot_ids"] is JArray pending)
+                {
+                    foreach (var id in pending)
+                        knownIds.Add(id.Value<uint>());
+                }
+            }
+            catch (Exception ex)
+            {
+                AppendLog($"Warning: Failed to fetch server-known depot keys ({ex.Message}), will dump all keys");
+            }
+
+            return knownIds;
+        }
+
         #endregion
 
         #region Dumping Logic
@@ -415,6 +454,22 @@ namespace SolusManifestApp.Tools.DepotDumper
                     UpdateStatus("Requesting package info...");
                     await steam3.RequestPackageInfo(licenseQuery);
 
+                    _skippedDepotCount = 0;
+                    _dumpedDepotCount = 0;
+
+                    var settings = _settingsService.LoadSettings();
+                    if (!string.IsNullOrWhiteSpace(settings.ApiKey))
+                    {
+                        UpdateStatus("Fetching server-known depot keys...");
+                        _serverKnownDepotIds = await FetchServerKnownDepotIdsAsync(settings.ApiKey);
+                        AppendLog($"Server already has {_serverKnownDepotIds.Count} depot keys");
+                    }
+                    else
+                    {
+                        AppendLog("Warning: No API key set, skipping server depot key check");
+                        _serverKnownDepotIds = new HashSet<uint>();
+                    }
+
                     if (config.TargetAppIds.Count == 0)
                     {
                         AppendLog("Dumping all apps in account...");
@@ -426,6 +481,7 @@ namespace SolusManifestApp.Tools.DepotDumper
                         await DumpSpecificApps(licenseQuery, config.TargetAppIds);
                     }
 
+                    AppendLog($"Dumped {_dumpedDepotCount} new depot keys, skipped {_skippedDepotCount} already known by server");
                     UpdateStatus("Dumping complete!");
                     AppendLog("All operations completed successfully.");
                 }
@@ -686,6 +742,12 @@ namespace SolusManifestApp.Tools.DepotDumper
                 if (!isOwned)
                     continue;
 
+                if (_serverKnownDepotIds.Contains(depotId))
+                {
+                    _skippedDepotCount++;
+                    continue;
+                }
+
                 await steam3.RequestDepotKeyEx(depotId, appId);
 
                 byte[]? depotKey;
@@ -695,6 +757,7 @@ namespace SolusManifestApp.Tools.DepotDumper
                     {
                         sw_keys.WriteLine("{0};{1}", depotId, string.Concat(depotKey.Select(b => b.ToString("X2")).ToArray()));
                         depots.Add(depotId);
+                        _dumpedDepotCount++;
                     }
 
                     sw_appnames.WriteLine("\t{0}", depotId);
@@ -714,14 +777,22 @@ namespace SolusManifestApp.Tools.DepotDumper
                 uint workshopDepotId = depotInfo["workshopdepot"].AsUnsignedInteger();
                 if (workshopDepotId != 0 && !depots.Contains(workshopDepotId))
                 {
-                    await steam3.RequestDepotKeyEx(workshopDepotId, appId);
-
-                    byte[]? workshopKey;
-                    if (steam3.DepotKeys.TryGetValue(workshopDepotId, out workshopKey))
+                    if (_serverKnownDepotIds.Contains(workshopDepotId))
                     {
-                        sw_keys.WriteLine("{0};{1}", workshopDepotId, string.Concat(workshopKey.Select(b => b.ToString("X2")).ToArray()));
-                        depots.Add(workshopDepotId);
-                        sw_appnames.WriteLine("\t{0} (workshop)", workshopDepotId);
+                        _skippedDepotCount++;
+                    }
+                    else
+                    {
+                        await steam3.RequestDepotKeyEx(workshopDepotId, appId);
+
+                        byte[]? workshopKey;
+                        if (steam3.DepotKeys.TryGetValue(workshopDepotId, out workshopKey))
+                        {
+                            sw_keys.WriteLine("{0};{1}", workshopDepotId, string.Concat(workshopKey.Select(b => b.ToString("X2")).ToArray()));
+                            depots.Add(workshopDepotId);
+                            _dumpedDepotCount++;
+                            sw_appnames.WriteLine("\t{0} (workshop)", workshopDepotId);
+                        }
                     }
                 }
             }
