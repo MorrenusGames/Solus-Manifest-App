@@ -260,11 +260,13 @@ namespace SolusManifestApp.Tools.DepotDumper
             var knownIds = new HashSet<uint>();
             try
             {
-                using var httpClient = new HttpClient();
+                using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(600) };
                 var response = await httpClient.GetAsync($"https://manifest.morrenus.xyz/api/v1/depot-keys?api_key={apiKey}");
                 if (!response.IsSuccessStatusCode)
                 {
-                    AppendLog($"Warning: Server returned {response.StatusCode} when fetching known depot keys, will dump all keys");
+                    var errorBody = await response.Content.ReadAsStringAsync();
+                    AppendLog($"Warning: Server returned {(int)response.StatusCode} ({response.StatusCode}) when fetching known depot keys, will dump all keys");
+                    AppendLog($"Server response: {errorBody}");
                     return knownIds;
                 }
 
