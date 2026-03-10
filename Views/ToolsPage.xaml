@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:depotDumper="clr-namespace:SolusManifestApp.Tools.DepotDumper"
              xmlns:configVdf="clr-namespace:SolusManifestApp.Tools.ConfigVdfKeyExtractor"
-             xmlns:views="clr-namespace:SolusManifestApp.Views">
+             xmlns:views="clr-namespace:SolusManifestApp.Views"
+             xmlns:cloudFix="clr-namespace:SolusManifestApp.Tools.CloudFix">
     <Grid Margin="30">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -180,6 +181,11 @@
 
                     </StackPanel>
                 </ScrollViewer>
+            </TabItem>
+
+            <!-- Cloud Fix Tab -->
+            <TabItem Header="☁ Cloud Fix">
+                <cloudFix:CloudFixControl HorizontalAlignment="Stretch"/>
             </TabItem>
         </TabControl>
     </Grid>
