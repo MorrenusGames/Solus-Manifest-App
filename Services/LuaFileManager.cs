@@ -404,7 +404,6 @@ namespace SolusManifestApp.Services
                 var lines = content.Split('\n');
 
                 // Check ALL setManifestid lines to determine state
-                bool hasCommented = false;
                 bool hasUncommented = false;
 
                 foreach (var line in lines)
@@ -414,7 +413,6 @@ namespace SolusManifestApp.Services
                     // Check for commented setManifestid
                     if (trimmed.StartsWith("--setManifestid"))
                     {
-                        hasCommented = true;
                     }
                     // Check for uncommented setManifestid
                     else if (trimmed.StartsWith("setManifestid"))

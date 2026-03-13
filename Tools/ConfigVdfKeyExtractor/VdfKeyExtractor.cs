@@ -59,7 +59,7 @@ namespace SolusManifestApp.Tools.ConfigVdfKeyExtractor
             return existingDepotIds;
         }
 
-        public static ExtractionResult ExtractKeysFromVdf(string vdfPath, string combinedKeysPath = null)
+        public static ExtractionResult ExtractKeysFromVdf(string vdfPath, string? combinedKeysPath = null)
         {
             var result = new ExtractionResult { Success = false };
 

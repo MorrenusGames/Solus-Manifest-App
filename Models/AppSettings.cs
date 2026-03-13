@@ -100,6 +100,9 @@ namespace SolusManifestApp.Models
         public bool DisableAllNotifications { get; set; } = false;
         public bool ShowGameAddedNotification { get; set; } = true;
 
+        // Custom Game Directory (scan for {appid}.zip or {appid}.lua to detect downloaded games)
+        public string CustomGameDirectory { get; set; } = string.Empty;
+
         // View Mode Preferences
         public bool StoreListView { get; set; } = false; // false = grid, true = list
         public bool LibraryListView { get; set; } = false; // false = grid, true = list

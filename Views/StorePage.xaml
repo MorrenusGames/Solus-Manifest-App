@@ -332,6 +332,34 @@
                                             </TextBlock.Style>
                                         </TextBlock>
                                     </Border>
+
+                                    <!-- Downloaded Badge (Grid View only - overlaid on image) -->
+                                    <Border CornerRadius="4"
+                                            Padding="8,4"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Top"
+                                            Margin="8"
+                                            Background="#CC4CAF50"
+                                            Visibility="{Binding IsInstalled, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding DataContext.IsListView, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="False"/>
+                                                            <Condition Binding="{Binding IsInstalled}" Value="True"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </MultiDataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="✓ Downloaded"
+                                                   FontSize="10"
+                                                   FontWeight="Bold"
+                                                   Foreground="White"/>
+                                    </Border>
                                 </Grid>
 
                                 <!-- Game Info (Grid View) -->
@@ -393,6 +421,19 @@
                                                     </Style>
                                                 </TextBlock.Style>
                                             </TextBlock>
+                                        </Border>
+
+                                        <!-- Downloaded Badge (List View) -->
+                                        <Border CornerRadius="4"
+                                                Padding="6,3"
+                                                VerticalAlignment="Center"
+                                                Margin="0,0,10,0"
+                                                Background="#CC4CAF50"
+                                                Visibility="{Binding IsInstalled, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <TextBlock Text="✓ Downloaded"
+                                                       FontSize="10"
+                                                       FontWeight="Bold"
+                                                       Foreground="White"/>
                                         </Border>
 
                                         <TextBlock Text="{Binding GameName}"

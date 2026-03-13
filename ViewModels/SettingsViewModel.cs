@@ -144,6 +144,10 @@ namespace SolusManifestApp.ViewModels
         [ObservableProperty]
         private string _gBESteamWebApiKey = string.Empty;
 
+        // Custom Game Directory
+        [ObservableProperty]
+        private string _customGameDirectory = string.Empty;
+
         [ObservableProperty]
         private bool _verifyFilesAfterDownload;
 
@@ -221,6 +225,7 @@ namespace SolusManifestApp.ViewModels
         partial void OnCustomAccentHoverChanged(string value) => MarkAsUnsaved();
         partial void OnCustomTextPrimaryChanged(string value) => MarkAsUnsaved();
         partial void OnCustomTextSecondaryChanged(string value) => MarkAsUnsaved();
+        partial void OnCustomGameDirectoryChanged(string value) => MarkAsUnsaved();
 
         private void MarkAsUnsaved()
         {
@@ -350,6 +355,9 @@ namespace SolusManifestApp.ViewModels
             CustomTextPrimary = Settings.CustomTextPrimary;
             CustomTextSecondary = Settings.CustomTextSecondary;
 
+            // Load Custom Game Directory
+            CustomGameDirectory = Settings.CustomGameDirectory;
+
             _isLoading = false;
             HasUnsavedChanges = false; // Clear unsaved changes flag after load
 
@@ -417,6 +425,9 @@ namespace SolusManifestApp.ViewModels
             Settings.CustomAccentHover = CustomAccentHover;
             Settings.CustomTextPrimary = CustomTextPrimary;
             Settings.CustomTextSecondary = CustomTextSecondary;
+
+            // Save Custom Game Directory
+            Settings.CustomGameDirectory = CustomGameDirectory;
 
             try
             {
@@ -750,6 +761,21 @@ namespace SolusManifestApp.ViewModels
                 GBETokenOutputPath = dialog.FolderName;
                 Directory.CreateDirectory(GBETokenOutputPath);
                 StatusMessage = "GBE output path updated";
+            }
+        }
+
+        [RelayCommand]
+        private void BrowseCustomGameDirectory()
+        {
+            var dialog = new OpenFolderDialog
+            {
+                Title = "Select Custom Game Directory"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                CustomGameDirectory = dialog.FolderName;
+                StatusMessage = "Custom game directory updated";
             }
         }
 

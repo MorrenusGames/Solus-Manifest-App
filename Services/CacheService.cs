@@ -88,9 +88,9 @@ namespace SolusManifestApp.Services
                     var json = await response.Content.ReadAsStringAsync();
                     dynamic? data = JsonConvert.DeserializeObject<dynamic>(json);
 
-                    if (data != null && data["data"] != null && data["data"]["header_image"] != null)
+                    if (data != null && data!["data"] != null && data!["data"]!["header_image"] != null)
                     {
-                        string headerImagePath = data["data"]["header_image"].ToString();
+                        string headerImagePath = data!["data"]!["header_image"]!.ToString();
                         if (!string.IsNullOrEmpty(headerImagePath))
                         {
                             var imageUrl = $"https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/{appId}/{headerImagePath}";
@@ -129,9 +129,9 @@ namespace SolusManifestApp.Services
                     var json = await storeResponse.Content.ReadAsStringAsync();
                     dynamic? data = JsonConvert.DeserializeObject<dynamic>(json);
 
-                    if (data != null && data[appId] != null && data[appId]["success"] == true)
+                    if (data != null && data![appId] != null && data![appId]!["success"] == true)
                     {
-                        var gameData = data[appId]["data"];
+                        var gameData = data![appId]!["data"];
                         string? imageUrl = gameData["header_image"]?.ToString();
 
                         if (!string.IsNullOrEmpty(imageUrl))
@@ -279,9 +279,9 @@ namespace SolusManifestApp.Services
 
                     // Parse JSON to get header_image or capsule_image
                     dynamic? data = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(json);
-                    if (data != null && data[appId] != null && data[appId]["success"] == true)
+                    if (data != null && data![appId] != null && data![appId]!["success"] == true)
                     {
-                        var gameData = data[appId]["data"];
+                        var gameData = data![appId]!["data"];
                         string? imageUrl = gameData["header_image"]?.ToString();
 
                         if (!string.IsNullOrEmpty(imageUrl))

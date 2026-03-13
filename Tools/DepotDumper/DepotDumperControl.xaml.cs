@@ -20,7 +20,6 @@ namespace SolusManifestApp.Tools.DepotDumper
     {
         private Steam3Session? steam3;
         private CancellationTokenSource? cancellationTokenSource;
-        private bool isDumping = false;
         private List<string> generatedFiles = new List<string>();
         private readonly SettingsService _settingsService;
         private StreamWriter? _logFile;
@@ -109,7 +108,6 @@ namespace SolusManifestApp.Tools.DepotDumper
             LoginView.Visibility = Visibility.Visible;
             ProgressView.Visibility = Visibility.Collapsed;
             QrCodeSection.Visibility = Visibility.Collapsed;
-            isDumping = false;
 
             UsernameTextBox.Text = string.Empty;
             PasswordBox.Password = string.Empty;
@@ -301,7 +299,6 @@ namespace SolusManifestApp.Tools.DepotDumper
         {
             LoginView.Visibility = Visibility.Collapsed;
             ProgressView.Visibility = Visibility.Visible;
-            isDumping = true;
 
             try
             {
@@ -391,7 +388,6 @@ namespace SolusManifestApp.Tools.DepotDumper
                         DoneButton.Visibility = Visibility.Visible;
                     }
 
-                    isDumping = false;
                 });
             }
         }
@@ -435,7 +431,7 @@ namespace SolusManifestApp.Tools.DepotDumper
 
                     _ = Task.Run(() => steam3.TickCallbacks());
 
-                    Dispatcher.InvokeAsync(() =>
+                    _ = Dispatcher.InvokeAsync(() =>
                     {
                         QrCodeSection.Visibility = Visibility.Collapsed;
                     });
@@ -443,7 +439,9 @@ namespace SolusManifestApp.Tools.DepotDumper
                     UpdateStatus("Getting licenses...");
 
                     IEnumerable<uint> licenseQuery;
-                    if (steam3.steamUser.SteamID.AccountType == EAccountType.AnonUser)
+#pragma warning disable CS8602
+                    if (steam3!.steamUser.SteamID.AccountType == EAccountType.AnonUser)
+#pragma warning restore CS8602
                     {
                         licenseQuery = new List<uint>() { 17906 };
                     }
@@ -497,7 +495,9 @@ namespace SolusManifestApp.Tools.DepotDumper
 
         private async Task DumpAllApps(IEnumerable<uint> licenseQuery)
         {
+#pragma warning disable CS8602
             string filenameUser = (steam3!.steamUser.SteamID.AccountType != EAccountType.AnonUser)
+#pragma warning restore CS8602
                 ? steam3.steamUser.SteamID.AccountID.ToString()
                 : "anon";
 

@@ -93,7 +93,7 @@ namespace SolusManifestApp.Services
                 }
 
                 // Step 1: Get Steam directory and build config.vdf path
-                string steamPath = _steamService.GetSteamPath();
+                string steamPath = _steamService.GetSteamPath()!;
                 if (string.IsNullOrEmpty(steamPath))
                 {
                     _loggerService.Log("INFO", "Cannot upload config keys: Steam directory not detected");
@@ -110,7 +110,7 @@ namespace SolusManifestApp.Services
                 }
 
                 _loggerService.Log("INFO", "Extracting depot keys from config.vdf...");
-                var extractionResult = VdfKeyExtractor.ExtractKeysFromVdf(configVdfPath, null);
+                var extractionResult = VdfKeyExtractor.ExtractKeysFromVdf(configVdfPath, null!);
 
                 if (!extractionResult.Success || extractionResult.Keys.Count == 0)
                 {

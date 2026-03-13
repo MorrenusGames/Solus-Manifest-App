@@ -1,3 +1,4 @@
+#nullable disable
 // Stub class to replace console authenticator
 using SteamKit2.Authentication;
 

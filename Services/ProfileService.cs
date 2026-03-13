@@ -238,14 +238,12 @@ namespace SolusManifestApp.Services
             profile.ModifiedAt = DateTime.UtcNow;
             SaveProfiles();
 
-            bool wasUninstalled = false;
             if (uninstallGame)
             {
                 var existsInOtherProfile = data.Profiles.Any(p => p.Id != profileId && p.Games.Any(g => g.AppId == appId));
                 if (!existsInOtherProfile)
                 {
                     _libraryRefreshService.NotifyGameUninstalled(appId);
-                    wasUninstalled = true;
                     _logger.Info($"Uninstalled game {appId} (not in any other profile)");
                 }
                 else
@@ -451,7 +449,7 @@ namespace SolusManifestApp.Services
                 };
 
                 var steamPath = _steamService.GetSteamPath();
-                var depotCachePath = Path.Combine(steamPath, "depotcache");
+                var depotCachePath = Path.Combine(steamPath!, "depotcache");
                 int manifestCount = 0;
 
                 if (File.Exists(filePath))
@@ -532,7 +530,7 @@ namespace SolusManifestApp.Services
                 if (filePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
                 {
                     var steamPath = _steamService.GetSteamPath();
-                    var depotCachePath = Path.Combine(steamPath, "depotcache");
+                    var depotCachePath = Path.Combine(steamPath!, "depotcache");
 
                     using (var zipArchive = ZipFile.OpenRead(filePath))
                     {

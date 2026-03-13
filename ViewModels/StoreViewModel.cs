@@ -6,6 +6,7 @@ using SolusManifestApp.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,6 +23,7 @@ namespace SolusManifestApp.ViewModels
         private readonly NotificationService _notificationService;
         private readonly ManifestStorageService _manifestStorageService;
         private readonly AppListCacheService _appListCacheService;
+        private readonly LibraryDatabaseService _libraryDatabaseService;
         private readonly SemaphoreSlim _iconLoadSemaphore = new SemaphoreSlim(10, 10);
         private CancellationTokenSource? _debounceTokenSource;
 
@@ -93,7 +95,8 @@ namespace SolusManifestApp.ViewModels
             CacheService cacheService,
             NotificationService notificationService,
             ManifestStorageService manifestStorageService,
-            AppListCacheService appListCacheService)
+            AppListCacheService appListCacheService,
+            LibraryDatabaseService libraryDatabaseService)
         {
             _manifestApiService = manifestApiService;
             _downloadService = downloadService;
@@ -102,6 +105,7 @@ namespace SolusManifestApp.ViewModels
             _notificationService = notificationService;
             _manifestStorageService = manifestStorageService;
             _appListCacheService = appListCacheService;
+            _libraryDatabaseService = libraryDatabaseService;
 
             // Auto-load games on startup
             _ = InitializeAsync();
@@ -640,10 +644,38 @@ namespace SolusManifestApp.ViewModels
 
         private void UpdateInstallationStatus(List<LibraryGame> games)
         {
+            // Build a set of installed app IDs from the library database
+            var libraryItems = _libraryDatabaseService.GetAllLibraryItems();
+            var libraryAppIds = new HashSet<string>(libraryItems.Select(i => i.AppId), StringComparer.OrdinalIgnoreCase);
+
+            // Build a set of app IDs found in the custom game directory
+            var customDirAppIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var settings = _settingsService.LoadSettings();
+            if (!string.IsNullOrEmpty(settings.CustomGameDirectory) && Directory.Exists(settings.CustomGameDirectory))
+            {
+                try
+                {
+                    foreach (var file in Directory.EnumerateFiles(settings.CustomGameDirectory))
+                    {
+                        var ext = Path.GetExtension(file).ToLowerInvariant();
+                        if (ext == ".zip" || ext == ".lua")
+                        {
+                            customDirAppIds.Add(Path.GetFileNameWithoutExtension(file));
+                        }
+                    }
+                }
+                catch
+                {
+                    // Silently ignore directory read errors
+                }
+            }
+
             foreach (var game in games)
             {
                 var installedInfo = _manifestStorageService.GetInstalledManifest(game.GameId);
-                game.IsInstalled = installedInfo != null;
+                game.IsInstalled = installedInfo != null
+                    || libraryAppIds.Contains(game.GameId)
+                    || customDirAppIds.Contains(game.GameId);
                 game.HasUpdate = false;
             }
         }
