@@ -1,3 +1,4 @@
+#nullable disable
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -25,10 +26,10 @@ namespace SolusManifestApp.Tools.DepotDumper
 
         // Events for GUI
         public delegate void QrCodeGeneratedHandler(string qrUrl);
-        public event QrCodeGeneratedHandler? OnQrCodeGenerated;
+        public event QrCodeGeneratedHandler OnQrCodeGenerated;
 
         public delegate void LogHandler(string message);
-        public event LogHandler? OnLog;
+        public event LogHandler OnLog;
 
         public Dictionary<uint, ulong> AppTokens { get; } = [];
         public Dictionary<uint, ulong> PackageTokens { get; } = [];

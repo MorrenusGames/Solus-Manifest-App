@@ -119,9 +119,9 @@ namespace SolusManifestApp.Converters
         {
             if (value is string currentPage && parameter is string pageName)
             {
-                return currentPage == pageName ? "Active" : null;
+                return currentPage == pageName ? "Active" : (object)null!;
             }
-            return null;
+            return null!;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -234,10 +234,10 @@ namespace SolusManifestApp.Converters
                 }
                 catch
                 {
-                    return null;
+                    return null!;
                 }
             }
-            return null;
+            return null!;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

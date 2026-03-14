@@ -1,3 +1,4 @@
+#nullable disable
 // Stub class to replace console ANSI functionality
 namespace DepotDownloader
 {

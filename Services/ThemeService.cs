@@ -8,7 +8,7 @@ namespace SolusManifestApp.Services
 {
     public class ThemeService
     {
-        public void ApplyTheme(AppTheme theme, AppSettings settings = null)
+        public void ApplyTheme(AppTheme theme, AppSettings? settings = null)
         {
             if (theme == AppTheme.Custom && settings != null)
             {

@@ -285,7 +285,7 @@ namespace SolusManifestApp.Services
             if (data == null)
                 return "Unknown Game";
 
-            var app = data.AppList.Apps.FirstOrDefault(a => a.AppId.ToString() == appId);
+            var app = data.AppList!.Apps.FirstOrDefault(a => a.AppId.ToString() == appId);
             return app?.Name ?? "Unknown Game";
         }
 
@@ -302,7 +302,7 @@ namespace SolusManifestApp.Services
             if (data == null)
                 return new Dictionary<string, string>();
 
-            return data.AppList.Apps.ToDictionary(
+            return data.AppList!.Apps.ToDictionary(
                 app => app.AppId.ToString(),
                 app => app.Name
             );

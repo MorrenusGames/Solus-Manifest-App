@@ -526,6 +526,31 @@
                                           IsChecked="{Binding DeleteZipAfterInstall}"
                                           Foreground="{DynamicResource TextPrimaryBrush}"
                                           ToolTip="Automatically delete the downloaded ZIP file after successful installation"/>
+
+                                <TextBlock Text="Custom Game Directory"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Margin="0,15,0,5"/>
+                                <TextBlock Text="Scan a custom folder for downloaded games ({appid}.zip or {appid}.lua) to show 'Downloaded' badges in the Store"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           FontSize="11"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,5"/>
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBox Grid.Column="0"
+                                             Text="{Binding CustomGameDirectory, UpdateSourceTrigger=PropertyChanged}"
+                                             IsReadOnly="True"
+                                             Margin="0,0,10,0"/>
+                                    <Button Grid.Column="1"
+                                            Content="Browse"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            Command="{Binding BrowseCustomGameDirectoryCommand}"
+                                            Padding="20,8"/>
+                                </Grid>
                             </StackPanel>
                         </Border>
 

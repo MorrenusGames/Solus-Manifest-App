@@ -9,7 +9,7 @@ namespace SolusManifestApp.Views
 {
     public partial class LuaInstallerPage : UserControl
     {
-        private Brush _originalBackground;
+        private Brush? _originalBackground;
 
         public LuaInstallerPage()
         {

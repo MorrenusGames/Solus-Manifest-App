@@ -1,3 +1,4 @@
+#nullable disable
 // Stub class to replace platform utilities
 using System;
 

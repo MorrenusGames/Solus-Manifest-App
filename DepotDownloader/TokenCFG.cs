@@ -1,3 +1,5 @@
+#nullable disable
+// Stub class for token configuration
 using System.Collections.Generic;
 
 namespace DepotDownloader

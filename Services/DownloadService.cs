@@ -57,7 +57,7 @@ namespace SolusManifestApp.Services
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                App.Current.Dispatcher.BeginInvoke(() =>
+                _ = App.Current.Dispatcher.BeginInvoke(() =>
                     downloadItem.StatusMessage = "Checking server status...");
 
                 _logger.Debug($"Checking status for app {appId}...");
@@ -73,7 +73,7 @@ namespace SolusManifestApp.Services
 
                 _logger.Debug("Server is updating, waiting 5 seconds before next check...");
                 // Server is updating, wait and poll again
-                App.Current.Dispatcher.BeginInvoke(() =>
+                _ = App.Current.Dispatcher.BeginInvoke(() =>
                     downloadItem.StatusMessage = "Server updating manifest, waiting...");
 
                 await Task.Delay(5000, cancellationToken);
@@ -180,7 +180,7 @@ namespace SolusManifestApp.Services
                     {
                         var totalBytes = response.Content.Headers.ContentLength ?? manifest.Size;
                         _logger.Debug($"Download started - Total bytes: {totalBytes}");
-                        App.Current.Dispatcher.BeginInvoke(() =>
+                        _ = App.Current.Dispatcher.BeginInvoke(() =>
                         {
                             downloadItem.TotalBytes = totalBytes;
                             downloadItem.Progress = 0;
@@ -208,7 +208,7 @@ namespace SolusManifestApp.Services
                                 var currentBytesRead = totalBytesRead;
                                 var progress = (double)currentBytesRead / totalBytes * 100;
                                 // Progress logging removed to reduce log spam
-                                App.Current.Dispatcher.BeginInvoke(() =>
+                                _ = App.Current.Dispatcher.BeginInvoke(() =>
                                 {
                                     downloadItem.DownloadedBytes = currentBytesRead;
                                     downloadItem.Progress = progress;
@@ -220,7 +220,7 @@ namespace SolusManifestApp.Services
 
                         _logger.Debug($"Download complete - Total read: {totalBytesRead} bytes");
                         // Final update to ensure we show 100%
-                        App.Current.Dispatcher.BeginInvoke(() =>
+                        _ = App.Current.Dispatcher.BeginInvoke(() =>
                         {
                             downloadItem.DownloadedBytes = totalBytesRead;
                             downloadItem.Progress = 100;
@@ -518,7 +518,7 @@ namespace SolusManifestApp.Services
 
             try
             {
-                App.Current.Dispatcher.BeginInvoke(() =>
+                _ = App.Current.Dispatcher.BeginInvoke(() =>
                 {
                     downloadItem.Status = DownloadStatus.Downloading;
                 });
@@ -526,7 +526,7 @@ namespace SolusManifestApp.Services
                 // Wait for server to be ready (poll status API)
                 await WaitForServerReady(manifest.AppId, apiKey, downloadItem, cts.Token);
 
-                App.Current.Dispatcher.BeginInvoke(() =>
+                _ = App.Current.Dispatcher.BeginInvoke(() =>
                     downloadItem.StatusMessage = "Download starting...");
 
                 // Download the file with 5-second response timeout
@@ -557,7 +557,7 @@ namespace SolusManifestApp.Services
                             // Server is still updating, go back to polling
                             await WaitForServerReady(manifest.AppId, apiKey, downloadItem, cts.Token);
 
-                            App.Current.Dispatcher.BeginInvoke(() =>
+                            _ = App.Current.Dispatcher.BeginInvoke(() =>
                                 downloadItem.StatusMessage = "Download starting...");
 
                             _logger.Debug("FileOnly: Retrying download after waiting...");
@@ -587,7 +587,7 @@ namespace SolusManifestApp.Services
 
                     var totalBytes = response.Content.Headers.ContentLength ?? manifest.Size;
                     _logger.Debug($"FileOnly: Download started - Total bytes: {totalBytes}");
-                    App.Current.Dispatcher.BeginInvoke(() =>
+                    _ = App.Current.Dispatcher.BeginInvoke(() =>
                     {
                         downloadItem.TotalBytes = totalBytes;
                         downloadItem.Progress = 0;
@@ -615,7 +615,7 @@ namespace SolusManifestApp.Services
                             var currentBytesRead = totalBytesRead;
                             var progress = (double)currentBytesRead / totalBytes * 100;
                             // Progress logging removed to reduce log spam
-                            App.Current.Dispatcher.BeginInvoke(() =>
+                            _ = App.Current.Dispatcher.BeginInvoke(() =>
                             {
                                 downloadItem.DownloadedBytes = currentBytesRead;
                                 downloadItem.Progress = progress;
@@ -627,7 +627,7 @@ namespace SolusManifestApp.Services
 
                     _logger.Debug($"FileOnly: Download complete - Total read: {totalBytesRead} bytes");
                     // Final update to ensure we show 100%
-                    App.Current.Dispatcher.BeginInvoke(() =>
+                    _ = App.Current.Dispatcher.BeginInvoke(() =>
                     {
                         downloadItem.DownloadedBytes = totalBytesRead;
                         downloadItem.Progress = 100;
@@ -635,7 +635,7 @@ namespace SolusManifestApp.Services
                     });
                 }
 
-                App.Current.Dispatcher.BeginInvoke(() =>
+                _ = App.Current.Dispatcher.BeginInvoke(() =>
                 {
                     downloadItem.Status = DownloadStatus.Completed;
                     downloadItem.EndTime = DateTime.Now;
@@ -644,7 +644,7 @@ namespace SolusManifestApp.Services
                 });
 
                 // Move to completed collection
-                App.Current.Dispatcher.BeginInvoke(() =>
+                _ = App.Current.Dispatcher.BeginInvoke(() =>
                 {
                     ActiveDownloads.Remove(downloadItem);
                     CompletedDownloads.Add(downloadItem);
@@ -815,7 +815,7 @@ namespace SolusManifestApp.Services
                 {
                     // Always use anonymous login
                     _logger.Info($"[DepotDownloader] Initializing Steam session (anonymous)...");
-                    App.Current.Dispatcher.BeginInvoke(() =>
+                    _ = App.Current.Dispatcher.BeginInvoke(() =>
                     {
                         downloadItem.StatusMessage = "Connecting to Steam (anonymous)...";
                     });
@@ -831,7 +831,7 @@ namespace SolusManifestApp.Services
 
                     _logger.Info($"[DepotDownloader] Steam session initialized successfully");
 
-                    App.Current.Dispatcher.BeginInvoke(() =>
+                    _ = App.Current.Dispatcher.BeginInvoke(() =>
                     {
                         downloadItem.StatusMessage = $"Downloading {depots.Count} depots...";
                     });
@@ -850,7 +850,7 @@ namespace SolusManifestApp.Services
                     if (success)
                     {
                         _logger.Info($"[DepotDownloader] Download successful! Moving to CompletedDownloads");
-                        App.Current.Dispatcher.BeginInvoke(() =>
+                        _ = App.Current.Dispatcher.BeginInvoke(() =>
                         {
                             downloadItem.Status = DownloadStatus.Completed;
                             downloadItem.Progress = 100;
@@ -891,7 +891,7 @@ namespace SolusManifestApp.Services
                     _logger.Error($"[DepotDownloader] Inner exception: {ex.InnerException.GetType().Name} - {ex.InnerException.Message}");
                 }
 
-                App.Current.Dispatcher.BeginInvoke(() =>
+                _ = App.Current.Dispatcher.BeginInvoke(() =>
                 {
                     downloadItem.Status = DownloadStatus.Failed;
                     downloadItem.StatusMessage = $"Failed: {ex.Message}";

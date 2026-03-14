@@ -34,7 +34,7 @@ namespace SolusManifestApp.Views
             // No need to check here on every startup
         }
 
-        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
         {
             // Save window size
             var settings = _settingsService.LoadSettings();
