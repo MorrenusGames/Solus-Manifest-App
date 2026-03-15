@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:depotDumper="clr-namespace:SolusManifestApp.Tools.DepotDumper"
              xmlns:configVdf="clr-namespace:SolusManifestApp.Tools.ConfigVdfKeyExtractor"
+             xmlns:cloudFix="clr-namespace:SolusManifestApp.Tools.CloudSaveFix"
              xmlns:views="clr-namespace:SolusManifestApp.Views">
     <Grid Margin="30">
         <Grid.RowDefinitions>
@@ -114,6 +115,11 @@
                         <views:GBEDenuvoControl HorizontalAlignment="Stretch"/>
                     </TabItem>
                 </TabControl>
+            </TabItem>
+
+            <!-- Cloud Fix Tab -->
+            <TabItem Header="&#x2601; Cloud Fix">
+                <cloudFix:CloudSaveFixControl HorizontalAlignment="Stretch"/>
             </TabItem>
 
             <!-- External Resources Tab -->

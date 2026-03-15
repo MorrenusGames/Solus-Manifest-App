@@ -1,0 +1,85 @@
+<UserControl x:Class="SolusManifestApp.Tools.CloudSaveFix.CloudSaveFixControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel MaxWidth="800" HorizontalAlignment="Left" Margin="20">
+
+            <!-- Description -->
+            <Border Style="{StaticResource ModernCardStyle}" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="SteamTools Cloud Save Fix"
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               Margin="0,0,0,10"/>
+                    <TextBlock TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               LineHeight="22">
+                        SteamTools rewrites Steam Cloud requests to use App ID 760 (Steam Screenshots)
+                        instead of the game's real App ID, which breaks saves in Capcom games and
+                        can cause strange behavior in other games. This tool can disable that SteamTools
+                        behavior at the expense of Steam Cloud not working in games that you do not own.
+                        Restart Steam after toggling this option.
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- Status + Toggle -->
+            <Border Style="{StaticResource ModernCardStyle}" Margin="0,0,0,20">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock x:Name="TxtStatus"
+                                   Text="Checking..."
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock x:Name="TxtSteamPath"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="12"
+                                   Margin="0,4,0,0"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button x:Name="BtnApply"
+                                Content="Enable"
+                                Click="Apply_Click"
+                                Padding="20,10"
+                                Margin="0,0,8,0"/>
+                        <Button x:Name="BtnRestore"
+                                Content="Disable"
+                                Click="Restore_Click"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Padding="20,10"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Log Output -->
+            <Border Style="{StaticResource ModernCardStyle}" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="Log"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               Margin="0,0,0,8"/>
+                    <TextBox x:Name="TxtLog"
+                             FontFamily="Consolas"
+                             FontSize="13"
+                             Height="200"
+                             Margin="0,0,0,0"
+                             IsReadOnly="True"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             VerticalScrollBarVisibility="Auto"
+                             HorizontalScrollBarVisibility="Auto"/>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
